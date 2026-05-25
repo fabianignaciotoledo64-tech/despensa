@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#1a1a1a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Despensa">
+<meta name="description" content="App de compras compartida para el hogar">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<title>Despensa</title>
+<style>
+:root {
+  --bg:       #f5f4f0;
+  --bg2:      #eceae4;
+  --bg3:      #e0ded8;
+  --card:     #ffffff;
+  --text:     #1a1a1a;
+  --text2:    #666660;
+  --text3:    #999994;
+  --border:   #d8d6d0;
+  --border2:  #c8c6c0;
+  --blue:     #2563eb;
+  --red:      #dc2626;
+  --green:    #16a34a;
+  --amber:    #d97706;
+  --radius:   12px;
+  --radius-sm:8px;
+  --shadow:   0 1px 3px rgba(0,0,0,.08), 0 4px 12px rgba(0,0,0,.04);
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg:     #18181b;
+    --bg2:    #27272a;
+    --bg3:    #3f3f46;
+    --card:   #1c1c1f;
+    --text:   #fafaf9;
+    --text2:  #a1a1aa;
+    --text3:  #71717a;
+    --border: #3f3f46;
+    --border2:#52525b;
+  }
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html, body { height: 100%; overflow: hidden; }
+body {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 15px;
+  overscroll-behavior: none;
+}
+
+/* LAYOUT */
+.app { display: flex; flex-direction: column; height: 100vh; height: 100dvh; }
+.header {
+  padding: env(safe-area-inset-top, 12px) 16px 0;
+  padding-top: max(env(safe-area-inset-top), 12px);
+  background: var(--bg);
+  z-index: 10;
+  flex-shrink: 0;
+}
+.header-row { display: flex; align-items: center; justify-content: space-between; padding-bottom: 12px; }
+.logo { font-size: 22px; font-weight: 700; letter-spacing: -0.5px; }
+.logo span { color: var(--blue); }
+.user-pill {
+  display: flex; align-items: center; gap: 6px;
+  padding: 5px 12px; border-radius: 20px;
+  background: var(--bg2); border: 1px solid var(--border);
+  cursor: pointer; font-size: 13px; color: var(--text2);
+  font-family: inherit;
+  transition: background .15s;
+}
+.user-pill:active { background: var(--bg3); }
+.user-dot { width: 8px; height: 8px; border-radius: 50%; }
+.sync-bar {
+  display: flex; align-items: center; gap: 5px;
+  font-size: 11px; color: var(--text3); padding-bottom: 4px;
+  font-family: 'Helvetica Neue', sans-serif;
+}
+.sync-dot { width: 5px; height: 5px; border-radius: 50%; }
+
+/* TABS */
+.tabs {
+  display: flex; gap: 2px;
+  background: var(--bg2); border-radius: var(--radius);
+  padding: 3px; margin: 0 16px 12px;
+  flex-shrink: 0;
+}
+.tab {
+  flex: 1; padding: 7px 4px; border: none; background: none;
+  border-radius: var(--radius-sm); font-size: 12px;
+  color: var(--text2); cursor: pointer;
+  font-family: 'Helvetica Neue', sans-serif;
+  font-weight: 500; transition: all .15s;
+  white-space: nowrap;
+}
+.tab.active {
+  background: var(--card); color: var(--text);
+  box-shadow: var(--shadow);
+}
+
+/* CONTENT */
+.panels { flex: 1; overflow: hidden; position: relative; }
+.panel { display: none; height: 100%; overflow-y: auto; padding: 0 16px 24px; }
+.panel.active { display: block; }
+.panel::-webkit-scrollbar { width: 3px; }
+.panel::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+/* SEARCH */
+.search-wrap { position: sticky; top: 0; background: var(--bg); padding: 8px 0; z-index: 5; }
+.search-input {
+  width: 100%; padding: 9px 14px; border-radius: var(--radius);
+  border: 1px solid var(--border); background: var(--card);
+  color: var(--text); font-size: 14px;
+  font-family: 'Helvetica Neue', sans-serif;
+  outline: none; transition: border-color .15s;
+}
+.search-input:focus { border-color: var(--blue); }
+
+/* CATEGORY */
+.cat-section { margin-bottom: 8px; }
+.cat-header {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 12px; cursor: pointer;
+  border-radius: var(--radius); background: var(--bg2);
+  border: 1px solid var(--border);
+  user-select: none; margin-bottom: 4px;
+  transition: background .1s;
+}
+.cat-header:active { background: var(--bg3); }
+.cat-emoji { font-size: 16px; }
+.cat-label { font-size: 12px; font-weight: 700; flex: 1; text-transform: uppercase; letter-spacing: .06em; font-family: 'Helvetica Neue', sans-serif; color: var(--text2); }
+.low-badge { font-size: 10px; padding: 2px 7px; border-radius: 10px; background: #fef2f2; color: #991b1b; font-family: 'Helvetica Neue', sans-serif; font-weight: 600; }
+.cat-arrow { font-size: 11px; color: var(--text3); transition: transform .2s; }
+.cat-arrow.open { transform: rotate(180deg); }
+.cat-body { display: none; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin-bottom: 4px; }
+.cat-body.open { display: block; }
+
+/* PRODUCT ROW */
+.prod-row {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 12px; border-bottom: 1px solid var(--border);
+}
+.prod-row:last-child { border-bottom: none; }
+.prod-info { flex: 1; min-width: 0; }
+.prod-name { font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.prod-meta { font-size: 11px; color: var(--text3); font-family: 'Helvetica Neue', sans-serif; display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.price-lbl { color: var(--blue); font-weight: 600; }
+.low-warn { color: var(--red); }
+.edit-btn {
+  width: 26px; height: 26px; border-radius: 50%;
+  border: 1px solid var(--border); background: none;
+  cursor: pointer; display: flex; align-items: center;
+  justify-content: center; color: var(--text3); font-size: 12px;
+  flex-shrink: 0; transition: border-color .15s;
+}
+.edit-btn:active { border-color: var(--blue); color: var(--blue); }
+.qty-ctrl { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
+.qty-btn {
+  width: 28px; height: 28px; border-radius: 50%;
+  border: 1px solid var(--border); background: var(--bg2);
+  cursor: pointer; font-size: 17px; line-height: 1;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text); transition: background .1s;
+}
+.qty-btn:active { background: var(--bg3); }
+.qty-num { min-width: 24px; text-align: center; font-size: 14px; font-weight: 700; font-family: 'Helvetica Neue', sans-serif; }
+.qty-zero { color: var(--text3); }
+.qty-low  { color: var(--red); }
+
+/* LISTA */
+.total-banner {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 14px 16px;
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 12px; box-shadow: var(--shadow);
+}
+.total-label { font-size: 12px; color: var(--text2); font-family: 'Helvetica Neue', sans-serif; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; }
+.total-amount { font-size: 24px; font-weight: 700; letter-spacing: -0.5px; }
+.section-sep { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--text3); font-family: 'Helvetica Neue', sans-serif; padding: 12px 0 6px; }
+.shop-card {
+  display: flex; align-items: flex-start; gap: 10px;
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 11px 12px; margin-bottom: 5px;
+  box-shadow: var(--shadow);
+}
+.check-circle {
+  width: 22px; height: 22px; border-radius: 50%;
+  border: 2px solid var(--border2); cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; margin-top: 1px; transition: all .15s;
+}
+.check-circle.done { background: var(--green); border-color: var(--green); color: #fff; font-size: 12px; }
+.shop-info { flex: 1; min-width: 0; }
+.shop-name { font-size: 13px; }
+.shop-name.done { text-decoration: line-through; color: var(--text3); }
+.shop-sub { font-size: 11px; color: var(--text2); font-family: 'Helvetica Neue', sans-serif; margin-top: 2px; }
+.shop-price { font-size: 13px; font-weight: 700; color: var(--blue); white-space: nowrap; flex-shrink: 0; font-family: 'Helvetica Neue', sans-serif; }
+.btn-clear {
+  display: block; width: 100%; margin-top: 12px; padding: 11px;
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: var(--radius); color: var(--text2);
+  font-size: 13px; cursor: pointer; font-family: inherit;
+  transition: background .15s;
+}
+.btn-clear:active { background: var(--bg3); }
+
+/* PRESUPUESTO */
+.grand-card {
+  background: var(--text); color: var(--bg);
+  border-radius: var(--radius); padding: 16px;
+  margin-bottom: 12px; box-shadow: var(--shadow);
+}
+.grand-lbl { font-size: 11px; font-family: 'Helvetica Neue', sans-serif; font-weight: 600; text-transform: uppercase; letter-spacing: .07em; opacity: .6; }
+.grand-num { font-size: 32px; font-weight: 700; letter-spacing: -1px; margin-top: 4px; }
+.grand-sub { font-size: 12px; opacity: .5; font-family: 'Helvetica Neue', sans-serif; margin-top: 2px; }
+.budget-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 14px;
+  margin-bottom: 8px; box-shadow: var(--shadow);
+}
+.bcat-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.bcat-name { font-size: 13px; font-weight: 700; flex: 1; }
+.bcat-total { font-size: 16px; font-weight: 700; color: var(--blue); font-family: 'Helvetica Neue', sans-serif; }
+.bar-bg { height: 3px; background: var(--bg2); border-radius: 2px; margin-bottom: 10px; }
+.bar-fill { height: 3px; border-radius: 2px; transition: width .4s; }
+.bitem { display: flex; justify-content: space-between; gap: 8px; padding: 4px 0; border-bottom: 1px solid var(--border); font-size: 12px; font-family: 'Helvetica Neue', sans-serif; }
+.bitem:last-child { border-bottom: none; }
+.bitem-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text2); }
+.bitem-price { color: var(--text); font-weight: 600; flex-shrink: 0; }
+
+/* AGREGAR */
+.form-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; margin-bottom: 12px; }
+.form-card label { display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--text2); font-family: 'Helvetica Neue', sans-serif; margin-bottom: 5px; }
+.form-card input, .form-card select {
+  width: 100%; padding: 9px 12px; border-radius: var(--radius-sm);
+  border: 1px solid var(--border); background: var(--bg2);
+  color: var(--text); font-size: 14px; font-family: inherit;
+  outline: none; margin-bottom: 12px; transition: border-color .15s;
+}
+.form-card input:focus, .form-card select:focus { border-color: var(--blue); }
+.form-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+.btn-add {
+  width: 100%; padding: 12px; background: var(--text); color: var(--bg);
+  border: none; border-radius: var(--radius); font-size: 15px;
+  font-family: inherit; font-weight: 700; cursor: pointer; transition: opacity .15s;
+}
+.btn-add:active { opacity: .7; }
+
+/* MODAL */
+.modal-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,.5); z-index: 200;
+  align-items: flex-end; justify-content: center;
+  backdrop-filter: blur(4px);
+}
+.modal-overlay.open { display: flex; }
+.modal-sheet {
+  background: var(--card); border-radius: 20px 20px 0 0;
+  padding: 20px 16px max(env(safe-area-inset-bottom), 24px);
+  width: 100%; max-width: 480px;
+  animation: slideUp .2s ease;
+}
+@keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+.modal-handle { width: 36px; height: 4px; background: var(--border2); border-radius: 2px; margin: 0 auto 16px; }
+.modal-title { font-size: 17px; font-weight: 700; margin-bottom: 14px; }
+.modal-close { float: right; background: none; border: none; font-size: 22px; cursor: pointer; color: var(--text2); line-height: 1; }
+.modal-input {
+  width: 100%; padding: 12px; border-radius: var(--radius);
+  border: 1px solid var(--border); background: var(--bg2);
+  color: var(--text); font-size: 18px; font-family: 'Helvetica Neue', sans-serif;
+  outline: none; margin-bottom: 12px;
+}
+.modal-input:focus { border-color: var(--blue); }
+.btn-save {
+  width: 100%; padding: 13px; background: var(--blue); color: #fff;
+  border: none; border-radius: var(--radius); font-size: 16px;
+  font-family: inherit; font-weight: 700; cursor: pointer;
+}
+.user-opt {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px; border-radius: var(--radius); cursor: pointer;
+  transition: background .1s; margin-bottom: 4px;
+}
+.user-opt:active, .user-opt.sel { background: var(--bg2); }
+.user-avatar { width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 14px; font-family: 'Helvetica Neue', sans-serif; flex-shrink: 0; }
+.user-opt-name { font-weight: 700; font-size: 15px; }
+.user-opt-sub { font-size: 12px; color: var(--text2); font-family: 'Helvetica Neue', sans-serif; }
+
+.empty { text-align: center; padding: 40px 16px; color: var(--text3); }
+.empty-icon { font-size: 40px; margin-bottom: 10px; }
+.install-tip { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: var(--radius); padding: 12px 14px; margin-bottom: 12px; font-size: 12px; color: #1e40af; font-family: 'Helvetica Neue', sans-serif; display: none; }
+.install-tip.show { display: block; }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <div class="header-row">
+      <div class="logo">Des<span>pensa</span></div>
+      <button class="user-pill" onclick="openModal('user-modal')">
+        <span class="user-dot" id="udot"></span>
+        <span id="uname">...</span>
+        <span style="font-size:10px;opacity:.5">▾</span>
+      </button>
+    </div>
+    <div class="sync-bar">
+      <span class="sync-dot" id="sdot" style="background:#16a34a"></span>
+      <span id="stext">Sincronizado</span>
+    </div>
+    <div class="install-tip" id="install-tip"></div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('stock')">📦 Stock</button>
+    <button class="tab" onclick="switchTab('lista')">📋 Lista</button>
+    <button class="tab" onclick="switchTab('presup')">💰 Presup.</button>
+    <button class="tab" onclick="switchTab('add')">＋ Agregar</button>
+  </div>
+
+  <div class="panels">
+    <div class="panel active" id="panel-stock">
+      <div class="search-wrap">
+        <input class="search-input" type="search" placeholder="Buscar producto..." id="search" oninput="renderStock()">
+      </div>
+      <div id="stock-list"></div>
+    </div>
+
+    <div class="panel" id="panel-lista">
+      <div id="shop-list"></div>
+      <button class="btn-clear" onclick="clearDone()">✓ Marcar como comprado y actualizar stock</button>
+    </div>
+
+    <div class="panel" id="panel-presup">
+      <div id="budget-list"></div>
+    </div>
+
+    <div class="panel" id="panel-add">
+      <div class="form-card">
+        <label>Nombre</label>
+        <input type="text" id="fn" placeholder="Ej: Leche entera">
+        <label>Categoría</label>
+        <select id="fc">
+          <option value="supermercado">🏪 Supermercado</option>
+          <option value="carniceria">🥩 Carnicería</option>
+          <option value="verduleria">🥦 Verdulería</option>
+          <option value="fiambreria">🧀 Fiambrería</option>
+          <option value="limpieza">🧹 Limpieza e higiene</option>
+        </select>
+        <div class="form-grid">
+          <div><label>Stock</label><input type="number" id="fs" placeholder="0" min="0"></div>
+          <div><label>Mínimo</label><input type="number" id="fm" placeholder="1" min="0"></div>
+          <div><label>Precio $</label><input type="number" id="fp" placeholder="0"></div>
+        </div>
+        <label>Unidad</label>
+        <select id="fu">
+          <option>unidad</option><option>kg</option><option>g</option>
+          <option>L</option><option>ml</option><option>paquete</option>
+          <option>maple</option><option>docena</option>
+        </select>
+        <button class="btn-add" onclick="addProduct()">Agregar producto</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODALES -->
+<div class="modal-overlay" id="user-modal">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <button class="modal-close" onclick="closeModal('user-modal')">×</button>
+    <div class="modal-title">¿Quién está usando la app?</div>
+    <div class="user-opt" onclick="setUser('yo')" id="opt-yo">
+      <div class="user-avatar" style="background:#dbeafe;color:#1d4ed8">Yo</div>
+      <div><div class="user-opt-name">Yo</div><div class="user-opt-sub">Usuario principal</div></div>
+    </div>
+    <div class="user-opt" onclick="setUser('esposa')" id="opt-esposa">
+      <div class="user-avatar" style="background:#fce7f3;color:#9d174d">Ella</div>
+      <div><div class="user-opt-name">Mi esposa</div><div class="user-opt-sub">Usuario compartido</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="price-modal">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <button class="modal-close" onclick="closeModal('price-modal')">×</button>
+    <div class="modal-title" id="pm-title">Precio</div>
+    <div style="font-size:13px;color:var(--text2);font-family:'Helvetica Neue',sans-serif;margin-bottom:8px;">Precio por <span id="pm-unit">unidad</span> ($)</div>
+    <input class="modal-input" type="number" id="pm-input" inputmode="decimal" placeholder="Ej: 2500">
+    <button class="btn-save" onclick="savePrice()">Guardar precio</button>
+  </div>
+</div>
+
+<script>
+const STORE_KEY = 'despensa-v4';
+const DONE_KEY  = 'despensa-v4-done';
+const USER_KEY  = 'despensa-v4-user';
+
+const CATS = {
+  supermercado: { label:'Supermercado',       emoji:'🏪', color:'#2563eb' },
+  carniceria:   { label:'Carnicería',         emoji:'🥩', color:'#ea580c' },
+  verduleria:   { label:'Verdulería',         emoji:'🥦', color:'#16a34a' },
+  fiambreria:   { label:'Fiambrería',         emoji:'🧀', color:'#d97706' },
+  limpieza:     { label:'Limpieza e higiene', emoji:'🧹', color:'#db2777' },
+};
+
+const DEFAULTS = [
+  // SUPERMERCADO
+  {id:'s01',name:'Leche',cat:'supermercado',stock:0,min:1,unit:'L',price:0},
+  {id:'s02',name:'Leche en polvo',cat:'supermercado',stock:0,min:1,unit:'unidad',price:0},
+  {id:'s03',name:'Manteca',cat:'supermercado',stock:0,min:1,unit:'unidad',price:0},
+  {id:'s04',name:'Crema de leche',cat:'supermercado',stock:0,min:1,unit:'unidad',price:0},
+  {id:'s05',name:'Crema larga vida',cat:'supermercado',stock:0,min:1,unit:'unidad',price:0},
+  {id:'s06',name:'Ricota',cat:'supermercado',stock:0,min:1,unit:'unidad',price:0},
+  {id:'s07',name:'Queso rallado',cat:'supermercado',stock:0,min:1,unit:'unidad',price:0},
+  {id:'s08',name:'Queso cremoso',cat:'supermercado',stock:0,min:1,unit:'unidad',price:0},
+  {id:'s09',name:'Yogur',cat:'supermercado',stock:0,min:1,unit:'unidad',price:0},
+  {id:'s10',name:'Aceite mezcla',cat:'supermercado',stock:0,min:1,unit:'L',price:0},
+  {id:'s11',name:'Aceite de oliva',cat:'supermercado',stock:0,min:1,unit:'unidad',price:0},
+  {id:'s12',name:'Mayonesa',cat:'supermercado',stock:0,min:3,unit:'unidad',price:0},
+  {id:'s13',name:'Mostaza',cat:'supermercado',stock:0,min:1,unit:'unidad',price:0},
+  {id:'s14',name:'Ketchup',cat:'supermercado',stock:0,min:1,unit:'unidad',price:0},
+  {id:'s15',name:'Tomate en frasco',cat:'supermercado',stock:0,min:1,unit:'unidad',price:0},
+  {id:'s16',name:'Aceitunas verdes',cat:'supermercado',stock:0,min:1,unit:'unidad',price:0},
+  {id:'s17',name:'Aceitunas negras',cat:'supermercado',stock:0,min:1,unit:'unidad',price:0},
+  {id:'s18',name:'Champiñones',cat:'supermercado',stock:0,min:1,unit:'unidad',price:0},
+  {id:'s19',name:'Arvejas frescas',cat:'supermercado',stock:0,min:1,unit:'unidad',price:0},
+  {id:'s20',name:'Aceto balsámico',cat:'supermercado',stock:0,min:1,unit:'unidad',price:0},
+  {id:'s21',name:'Vinagre blanco',cat:'supermercado',stock:0,min:1,unit:'unidad',price:0},
+  {id:'s22',name:'Sal fina',cat:'supermercado',stock:0,min:1,unit:'unidad',price:0},
+  {id:'s23',name:'Sal gruesa',cat:'supermercado',stock:0,min:1,unit:'unidad',price:0},
+  {id:'s24',name:'Azúcar',cat:'supermercado',stock:0,min:1,unit:'kg',price:0},
+  {id:'s25',name:'Edulcorante',cat:'supermercado',stock:0,min:1,unit:'unidad',price:0},
+  {id:'s26',name:'Harina común',cat:'supermercado',stock:0,min:1,unit:'kg',price:0},
+  {id:'s27',name:'Harina 0000',cat:'supermercado',stock:0,min:1,unit:'kg',price:0},
+  {id:'s28',name:'Harina leudante',cat:'supermercado',stock:0,min:1,unit:'kg',price:0},
+  {id:'s29',name:'Harina integral',cat:'supermercado',stock:0,min:1,unit:'kg',price:0},
+  {id:'s30',name:'Harina de garbanzos',cat:'supermercado',stock:0,min:1,unit:'kg',price:0},
+  {id:'s31',name:'Mezcla sin gluten',cat:'supermercado',stock:0,min:1,unit:'kg',price:0},
+  {id:'s32',name:'Arroz',cat:'supermercado',stock:0,min:1,unit:'kg',price:0},
+  {id:'s33',name:'Arroz Carnaroli',cat:'supermercado',stock:0,min:1,unit:'kg',price:0},
+  {id:'s34',name:'Maizena',cat:'supermercado',stock:0,min:1,unit:'unidad',price:0},
+  {id:'s35',name:'Polvo de hornear',cat:'supermercado',stock:0,min:1,unit:'unidad',price:0},
+  {id:'s36',name:'Levadura',cat:'supermercado',stock:0,min:1,unit:'unidad',price:0},
+  {id:'s37',name:'Pan rallado',cat:'supermercado',stock:0,min:1,unit:'unidad',price:0},
+  {id:'s38',name:'Semillas',cat:'supermercado',stock:0,min:1,unit:'unidad',price:0},
+  {id:'s39',name:'Frutas secas',cat:'supermercado',stock:0,min:1,unit:'unidad',price:0},
+  {id:'s40',name:'Yerba',cat:'supermercado',stock:0,min:4,unit:'kg',price:0},
+  {id:'s41',name:'Mate cocido',cat:'supermercado',stock:0,min:1,unit:'unidad',price:0},
+  {id:'s42',name:'Nescafé',cat:'supermercado',stock:0,min:1,unit:'unidad',price:0},
+  {id:'s43',name:'Galletitas',cat:'supermercado',stock:0,min:1,unit:'unidad',price:0},
+  {id:'s44',name:'Galletas de arroz',cat:'supermercado',stock:0,min:1,unit:'unidad',price:0},
+  {id:'s45',name:'Copos',cat:'supermercado',stock:0,min:1,unit:'unidad',price:0},
+  {id:'s46',name:'Ballerina',cat:'supermercado',stock:0,min:1,unit:'unidad',price:0},
+  {id:'s47',name:'Gelatina',cat:'supermercado',stock:0,min:1,unit:'unidad',price:0},
+  {id:'s48',name:'Flan',cat:'supermercado',stock:0,min:1,unit:'unidad',price:0},
+  {id:'s49',name:'Gaseosas',cat:'supermercado',stock:0,min:2,unit:'unidad',price:0},
+  {id:'s50',name:'Cerveza',cat:'supermercado',stock:0,min:1,unit:'unidad',price:0},
+  {id:'s51',name:'Vino tinto',cat:'supermercado',stock:0,min:1,unit:'unidad',price:0},
+  {id:'s52',name:'Vino blanco',cat:'supermercado',stock:0,min:1,unit:'unidad',price:0},
+  {id:'s53',name:'Champagne',cat:'supermercado',stock:0,min:1,unit:'unidad',price:0},
+  {id:'s54',name:'Oporto',cat:'supermercado',stock:0,min:1,unit:'unidad',price:0},
+  {id:'s55',name:'Pañuelos de papel',cat:'supermercado',stock:0,min:1,unit:'unidad',price:0},
+  {id:'s56',name:'Rollo de cocina',cat:'supermercado',stock:0,min:1,unit:'unidad',price:0},
+  {id:'s57',name:'Papel higiénico',cat:'supermercado',stock:0,min:4,unit:'unidad',price:0},
+  {id:'s58',name:'Fósforos',cat:'supermercado',stock:0,min:1,unit:'unidad',price:0},
+  {id:'s59',name:'Escarbadientes',cat:'supermercado',stock:0,min:1,unit:'unidad',price:0},
+  {id:'s60',name:'Comino',cat:'supermercado',stock:0,min:1,unit:'unidad',price:0},
+  {id:'s61',name:'Pimentón dulce',cat:'supermercado',stock:0,min:1,unit:'unidad',price:0},
+  {id:'s62',name:'Canela',cat:'supermercado',stock:0,min:1,unit:'unidad',price:0},
+  {id:'s63',name:'Condimento pizza',cat:'supermercado',stock:0,min:1,unit:'unidad',price:0},
+  {id:'s64',name:'Provenzal',cat:'supermercado',stock:0,min:1,unit:'unidad',price:0},
+  {id:'s65',name:'Barbacoa',cat:'supermercado',stock:0,min:1,unit:'unidad',price:0},
+  {id:'s66',name:'Piedritas (gato)',cat:'supermercado',stock:0,min:1,unit:'unidad',price:0},
+  // CARNICERÍA
+  {id:'c1',name:'Pata muslo',cat:'carniceria',stock:0,min:6,unit:'kg',price:0},
+  {id:'c2',name:'Carne para milanesas',cat:'carniceria',stock:0,min:4,unit:'kg',price:0},
+  {id:'c3',name:'Carne picada',cat:'carniceria',stock:0,min:4,unit:'kg',price:0},
+  {id:'c4',name:'Roastbeef en churrascos',cat:'carniceria',stock:0,min:4,unit:'kg',price:0},
+  {id:'c5',name:'Bondiola de cerdo',cat:'carniceria',stock:0,min:3,unit:'kg',price:0},
+  {id:'c6',name:'Carré sin hueso',cat:'carniceria',stock:0,min:2,unit:'kg',price:0},
+  {id:'c7',name:'Vacío',cat:'carniceria',stock:0,min:3,unit:'kg',price:0},
+  {id:'c8',name:'Paleta de cerdo',cat:'carniceria',stock:0,min:3,unit:'kg',price:0},
+  // VERDULERÍA
+  {id:'v1',name:'Morrón',cat:'verduleria',stock:0,min:1,unit:'unidad',price:0},
+  {id:'v2',name:'Remolacha',cat:'verduleria',stock:0,min:1,unit:'unidad',price:0},
+  {id:'v3',name:'Rúcula',cat:'verduleria',stock:0,min:1,unit:'unidad',price:0},
+  {id:'v4',name:'Cebollas',cat:'verduleria',stock:0,min:2,unit:'kg',price:0},
+  {id:'v5',name:'Banana',cat:'verduleria',stock:0,min:1,unit:'kg',price:0},
+  {id:'v6',name:'Papas',cat:'verduleria',stock:0,min:2,unit:'kg',price:0},
+  {id:'v7',name:'Zanahorias',cat:'verduleria',stock:0,min:1,unit:'kg',price:0},
+  {id:'v8',name:'Huevos',cat:'verduleria',stock:0,min:2,unit:'maple',price:0},
+  // FIAMBRERÍA
+  {id:'f1',name:'Jamón',cat:'fiambreria',stock:100,min:150,unit:'g',price:0},
+  {id:'f2',name:'Queso',cat:'fiambreria',stock:200,min:200,unit:'g',price:0},
+  // LIMPIEZA
+  {id:'l01',name:'Lavandina',cat:'limpieza',stock:0,min:1,unit:'unidad',price:0},
+  {id:'l02',name:'Detergente 5L',cat:'limpieza',stock:0,min:1,unit:'unidad',price:0},
+  {id:'l03',name:'Poet desinfectante 5L',cat:'limpieza',stock:0,min:1,unit:'unidad',price:0},
+  {id:'l04',name:'Comfort 5L',cat:'limpieza',stock:0,min:1,unit:'unidad',price:0},
+  {id:'l05',name:'Desengrasante 5L',cat:'limpieza',stock:0,min:1,unit:'unidad',price:0},
+  {id:'l06',name:'CIF',cat:'limpieza',stock:0,min:1,unit:'unidad',price:0},
+  {id:'l07',name:'Jabón para ropa',cat:'limpieza',stock:0,min:1,unit:'unidad',price:0},
+  {id:'l08',name:'Desmanchador',cat:'limpieza',stock:0,min:1,unit:'unidad',price:0},
+  {id:'l09',name:'Bolsas de consorcio',cat:'limpieza',stock:0,min:1,unit:'unidad',price:0},
+  {id:'l10',name:'Bolsas de basura',cat:'limpieza',stock:0,min:1,unit:'unidad',price:0},
+  {id:'l11',name:'Esponja de limpieza',cat:'limpieza',stock:0,min:2,unit:'unidad',price:0},
+  {id:'l12',name:'Cepillo de limpieza',cat:'limpieza',stock:0,min:1,unit:'unidad',price:0},
+  {id:'l13',name:'Trapo de piso',cat:'limpieza',stock:0,min:1,unit:'unidad',price:0},
+  {id:'l14',name:'Guantes de latex',cat:'limpieza',stock:0,min:1,unit:'unidad',price:0},
+  {id:'l15',name:'Lustra muebles',cat:'limpieza',stock:0,min:1,unit:'unidad',price:0},
+  {id:'l16',name:'Cera',cat:'limpieza',stock:0,min:1,unit:'unidad',price:0},
+  {id:'l17',name:'Naftalina',cat:'limpieza',stock:0,min:1,unit:'unidad',price:0},
+  {id:'l18',name:'Champú',cat:'limpieza',stock:0,min:1,unit:'unidad',price:0},
+  {id:'l19',name:'Acondicionador Fabi',cat:'limpieza',stock:0,min:1,unit:'unidad',price:0},
+  {id:'l20',name:'Crema dental',cat:'limpieza',stock:0,min:1,unit:'unidad',price:0},
+  {id:'l21',name:'Hilo dental',cat:'limpieza',stock:0,min:1,unit:'unidad',price:0},
+  {id:'l22',name:'Cepillo de dientes',cat:'limpieza',stock:0,min:1,unit:'unidad',price:0},
+  {id:'l23',name:'Desodorante Fabi',cat:'limpieza',stock:0,min:1,unit:'unidad',price:0},
+  {id:'l24',name:'Algodón',cat:'limpieza',stock:0,min:1,unit:'unidad',price:0},
+  {id:'l25',name:'Prestobarba',cat:'limpieza',stock:0,min:1,unit:'unidad',price:0},
+];
+
+let products = [], doneIds = new Set(), currentUser = 'yo';
+let openCats = new Set(Object.keys(CATS)), editPriceId = null;
+
+const fmt = n => n ? '$\u202f' + Math.round(n).toLocaleString('es-AR') : '—';
+const needsBuying = p => p.stock <= p.min;
+
+// STORAGE — usa localStorage para la PWA instalada
+function save() {
+  try { localStorage.setItem(STORE_KEY, JSON.stringify(products)); } catch(e){}
+}
+function saveDone() {
+  try { localStorage.setItem(DONE_KEY, JSON.stringify([...doneIds])); } catch(e){}
+}
+function load() {
+  try {
+    const r = localStorage.getItem(STORE_KEY);
+    products = r ? JSON.parse(r) : JSON.parse(JSON.stringify(DEFAULTS));
+    if (!r) save();
+    const d = localStorage.getItem(DONE_KEY);
+    if (d) doneIds = new Set(JSON.parse(d));
+    const u = localStorage.getItem(USER_KEY);
+    if (u) currentUser = u;
+  } catch(e) {
+    products = JSON.parse(JSON.stringify(DEFAULTS));
+  }
+  document.getElementById('sdot').style.background = '#16a34a';
+  document.getElementById('stext').textContent = 'Datos guardados en este dispositivo';
+  applyUser(); renderAll();
+}
+
+function applyUser() {
+  const yo = currentUser === 'yo';
+  document.getElementById('udot').style.background = yo ? '#2563eb' : '#db2777';
+  document.getElementById('uname').textContent = yo ? 'Yo' : 'Mi esposa';
+  document.getElementById('opt-yo').classList.toggle('sel', yo);
+  document.getElementById('opt-esposa').classList.toggle('sel', !yo);
+}
+function setUser(u) {
+  currentUser = u;
+  try { localStorage.setItem(USER_KEY, u); } catch(e){}
+  applyUser(); closeModal('user-modal');
+}
+
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+function switchTab(t) {
+  const names = ['stock','lista','presup','add'];
+  document.querySelectorAll('.tab').forEach((el,i) => el.classList.toggle('active', names[i]===t));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('panel-'+t).classList.add('active');
+  if (t==='lista') renderShopList();
+  else if (t==='stock') renderStock();
+  else if (t==='presup') renderBudget();
+}
+
+function renderAll() { renderStock(); renderShopList(); renderBudget(); }
+
+function renderStock() {
+  const q = (document.getElementById('search').value||'').toLowerCase();
+  const cont = document.getElementById('stock-list');
+  cont.innerHTML = '';
+  Object.keys(CATS).forEach(ck => {
+    const cat = CATS[ck];
+    const items = products.filter(p => p.cat===ck && (!q || p.name.toLowerCase().includes(q)));
+    if (!items.length) return;
+    const isOpen = openCats.has(ck);
+    const lowN = items.filter(needsBuying).length;
+    const sec = document.createElement('div');
+    sec.className = 'cat-section';
+    sec.innerHTML = `
+      <div class="cat-header" onclick="toggleCat('${ck}')">
+        <span class="cat-emoji">${cat.emoji}</span>
+        <span class="cat-label">${cat.label} <span style="font-weight:400;opacity:.5">(${items.length})</span></span>
+        ${lowN?`<span class="low-badge">${lowN} bajo</span>`:''}
+        <span class="cat-arrow ${isOpen?'open':''}">▾</span>
+      </div>
+      <div class="cat-body ${isOpen?'open':''}">
+        ${items.map(p=>{
+          const low = needsBuying(p);
+          return `<div class="prod-row">
+            <div class="prod-info">
+              <div class="prod-name">${p.name}</div>
+              <div class="prod-meta">
+                <span>${p.unit}</span>
+                ${p.price?`<span class="price-lbl">${fmt(p.price)}/${p.unit}</span>`:'<span style="font-style:italic">sin precio</span>'}
+                ${low?`<span class="low-warn">⚠ mín:${p.min}</span>`:''}
+              </div>
+            </div>
+            <button class="edit-btn" onclick="openPrice('${p.id}')">✏️</button>
+            <div class="qty-ctrl">
+              <button class="qty-btn" onclick="chQty('${p.id}',-1)">−</button>
+              <span class="qty-num ${p.stock===0?'qty-zero':''} ${low?'qty-low':''}">${p.stock}</span>
+              <button class="qty-btn" onclick="chQty('${p.id}',1)">+</button>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>`;
+    cont.appendChild(sec);
+  });
+  if (!cont.children.length)
+    cont.innerHTML = `<div class="empty"><div class="empty-icon">🔍</div>No encontrado</div>`;
+}
+
+function toggleCat(k) { openCats.has(k)?openCats.delete(k):openCats.add(k); renderStock(); }
+
+function chQty(id, d) {
+  const p = products.find(x=>x.id===id);
+  if (!p) return;
+  p.stock = Math.max(0, p.stock+d);
+  save(); renderStock(); renderShopList(); renderBudget();
+}
+
+function openPrice(id) {
+  const p = products.find(x=>x.id===id);
+  if (!p) return;
+  editPriceId = id;
+  document.getElementById('pm-title').textContent = p.name;
+  document.getElementById('pm-unit').textContent = p.unit;
+  document.getElementById('pm-input').value = p.price||'';
+  openModal('price-modal');
+  setTimeout(()=>document.getElementById('pm-input').focus(),200);
+}
+function savePrice() {
+  const p = products.find(x=>x.id===editPriceId);
+  if (p) { p.price = parseFloat(document.getElementById('pm-input').value)||0; save(); renderAll(); }
+  closeModal('price-modal');
+}
+
+function renderShopList() {
+  const cont = document.getElementById('shop-list');
+  const needed = products.filter(p=>needsBuying(p)||doneIds.has(p.id));
+  if (!needed.length) {
+    cont.innerHTML = `<div class="empty"><div class="empty-icon">✅</div>¡Todo completo!</div>`;
+    return;
+  }
+  let total = 0, html = '';
+  Object.keys(CATS).forEach(ck=>{
+    const cat=CATS[ck], items=needed.filter(p=>p.cat===ck);
+    if (!items.length) return;
+    html += `<div class="section-sep">${cat.emoji} ${cat.label}</div>`;
+    items.forEach(p=>{
+      const done=doneIds.has(p.id);
+      const qty=Math.max(1,p.min-p.stock+1);
+      const sub=p.price?p.price*qty:0;
+      if (!done&&sub) total+=sub;
+      html+=`<div class="shop-card">
+        <div class="check-circle ${done?'done':''}" onclick="toggleDone('${p.id}')">${done?'✓':''}</div>
+        <div class="shop-info">
+          <div class="shop-name ${done?'done':''}">${p.name}</div>
+          <div class="shop-sub">Comprar: <b>${qty} ${p.unit}</b> · Stock: ${p.stock}</div>
+        </div>
+        ${p.price?`<div class="shop-price">${fmt(sub)}</div>`:'<div style="font-size:11px;color:var(--text3)">—</div>'}
+      </div>`;
+    });
+  });
+  if (total>0) html = `<div class="total-banner"><div><div class="total-label">Total estimado</div></div><div class="total-amount">${fmt(total)}</div></div>`+html;
+  cont.innerHTML = html;
+}
+
+function toggleDone(id) {
+  doneIds.has(id)?doneIds.delete(id):doneIds.add(id);
+  saveDone(); renderShopList();
+}
+function clearDone() {
+  for (const id of doneIds) {
+    const p=products.find(x=>x.id===id);
+    if (p) p.stock=p.min+1;
+  }
+  doneIds.clear(); save(); saveDone(); renderAll();
+}
+
+function renderBudget() {
+  const cont = document.getElementById('budget-list');
+  const needed = products.filter(needsBuying);
+  let grand=0;
+  const cd={};
+  Object.keys(CATS).forEach(k=>{cd[k]={total:0,items:[]};});
+  needed.forEach(p=>{
+    const qty=Math.max(1,p.min-p.stock+1);
+    const sub=p.price?p.price*qty:0;
+    grand+=sub; cd[p.cat].total+=sub;
+    cd[p.cat].items.push({name:p.name,qty,unit:p.unit,price:p.price,sub});
+  });
+  const maxT=Math.max(...Object.values(cd).map(c=>c.total),1);
+  let html=`<div class="grand-card">
+    <div class="grand-lbl">Total estimado</div>
+    <div class="grand-num">${fmt(grand)}</div>
+    <div class="grand-sub">${needed.length} productos por reponer</div>
+  </div>`;
+  Object.keys(CATS).forEach(k=>{
+    const cat=CATS[k],d=cd[k];
+    if (!d.items.length) return;
+    const pct=Math.round(d.total/maxT*100);
+    html+=`<div class="budget-card">
+      <div class="bcat-row">
+        <span style="font-size:18px">${cat.emoji}</span>
+        <span class="bcat-name">${cat.label}</span>
+        <span class="bcat-total">${fmt(d.total)}</span>
+      </div>
+      <div class="bar-bg"><div class="bar-fill" style="width:${pct}%;background:${cat.color}"></div></div>
+      <div>${d.items.map(i=>`<div class="bitem"><span class="bitem-name">${i.name} <span style="opacity:.5">${i.qty} ${i.unit}</span></span><span class="bitem-price">${i.price?fmt(i.sub):'—'}</span></div>`).join('')}</div>
+    </div>`;
+  });
+  if (!needed.length) html+=`<div class="empty"><div class="empty-icon">✅</div>No falta nada</div>`;
+  cont.innerHTML=html;
+}
+
+function addProduct() {
+  const name=document.getElementById('fn').value.trim();
+  if (!name){alert('Ingresá un nombre');return;}
+  products.push({id:'p'+Date.now(),name,cat:document.getElementById('fc').value,
+    stock:parseInt(document.getElementById('fs').value)||0,
+    min:parseInt(document.getElementById('fm').value)||1,
+    price:parseFloat(document.getElementById('fp').value)||0,
+    unit:document.getElementById('fu').value});
+  ['fn','fs','fm','fp'].forEach(id=>document.getElementById(id).value='');
+  save(); switchTab('stock');
+}
+
+// PWA INSTALL PROMPT
+let deferredPrompt = null;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault(); deferredPrompt = e;
+  const tip = document.getElementById('install-tip');
+  tip.className = 'install-tip show';
+  tip.innerHTML = `📲 <b>Instalá la app:</b> <a href="#" onclick="installApp();return false;" style="color:inherit;font-weight:700">Tocá aquí</a> para instalarla en tu dispositivo`;
+});
+function installApp() {
+  if (deferredPrompt) { deferredPrompt.prompt(); deferredPrompt=null; }
+}
+
+// Service Worker
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js');
+}
+
+load();
+</script>
+</body>
+</html>
