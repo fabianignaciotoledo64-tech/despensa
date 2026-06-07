@@ -570,7 +570,7 @@ body {
   </div>
 </div>
 
-<script>
+<script type="module">
 const STORE_KEY = 'despensa-v4';
 const DONE_KEY  = 'despensa-v4-done';
 const USER_KEY  = 'despensa-v4-user';
@@ -713,12 +713,15 @@ const needsBuying = p => p.stock <= p.min;
 // ─── STORAGE ────────────────────────────────────────────
 function save() {
   try { localStorage.setItem(STORE_KEY, JSON.stringify(products)); } catch(e){}
+  if (typeof fbLoaded !== 'undefined' && fbLoaded) syncToFirebase();
 }
 function saveDone() {
   try { localStorage.setItem(DONE_KEY, JSON.stringify([...doneIds])); } catch(e){}
+  if (typeof fbLoaded !== 'undefined' && fbLoaded) syncToFirebase();
 }
 function saveShopData() {
   try { localStorage.setItem(SHOP_KEY, JSON.stringify(shopData)); } catch(e){}
+  if (typeof fbLoaded !== 'undefined' && fbLoaded) syncToFirebase();
 }
 function load() {
   try {
@@ -1167,7 +1170,94 @@ if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js');
 }
 
+// ─── FIREBASE ───────────────────────────────────────────
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js";
+import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCNNX2zS8rEiuGnVOt3NjMO32JBKiR8HPE",
+  authDomain: "despensa-3a0ed.firebaseapp.com",
+  databaseURL: "https://despensa-3a0ed-default-rtdb.firebaseio.com",
+  projectId: "despensa-3a0ed",
+  storageBucket: "despensa-3a0ed.firebasestorage.app",
+  messagingSenderId: "976544983894",
+  appId: "1:976544983894:web:525a1a619f93b1df3844f7"
+};
+
+const fbApp = initializeApp(firebaseConfig);
+const db = getDatabase(fbApp);
+
+let fbLoaded = false;
+let syncTimeout = null;
+
+function syncToFirebase() {
+  clearTimeout(syncTimeout);
+  syncTimeout = setTimeout(() => {
+    try {
+      set(ref(db, 'despensa'), {
+        products: products,
+        doneIds: [...doneIds],
+        shopData: shopData,
+        updatedAt: Date.now()
+      });
+      document.getElementById('sdot').style.background = '#16a34a';
+      document.getElementById('stext').textContent = 'Sincronizado';
+    } catch(e) {
+      document.getElementById('sdot').style.background = '#d97706';
+      document.getElementById('stext').textContent = 'Error al sincronizar';
+    }
+  }, 800);
+}
+
+function initFirebase() {
+  document.getElementById('sdot').style.background = '#d97706';
+  document.getElementById('stext').textContent = 'Conectando...';
+
+  onValue(ref(db, 'despensa'), (snapshot) => {
+    const data = snapshot.val();
+    if (!data) {
+      // Primera vez: subir datos locales a Firebase
+      syncToFirebase();
+      fbLoaded = true;
+      return;
+    }
+    // Actualizar local con datos de Firebase
+    if (data.products) {
+      products = data.products;
+      save();
+    }
+    if (data.doneIds) {
+      doneIds = new Set(data.doneIds);
+      saveDone();
+    }
+    if (data.shopData) {
+      shopData = data.shopData;
+      saveShopData();
+    }
+    document.getElementById('sdot').style.background = '#16a34a';
+    document.getElementById('stext').textContent = 'Sincronizado';
+    fbLoaded = true;
+    renderAll();
+  }, (error) => {
+    document.getElementById('sdot').style.background = '#dc2626';
+    document.getElementById('stext').textContent = 'Sin conexión — datos locales';
+  });
+}
+
+// Las funciones save/saveDone/saveShopData ya están definidas arriba;
+// initFirebase llama a syncToFirebase internamente vía onValue.
+
 load();
+initFirebase();
+
+// Exponer funciones al scope global (necesario con type="module")
+Object.assign(window, {
+  switchTab, toggleCat, chQty, openStockModal, saveStock,
+  openPrice, savePrice, openEditProduct, saveEdit, deleteProduct,
+  toggleDone, updateShopField, rerenderShopCard, verResumen,
+  confirmarCompra, limpiarLista, addProduct, installApp,
+  openModal, closeModal, setUser
+});
 </script>
 </body>
 </html>
