@@ -784,7 +784,7 @@ function renderAll() { renderStock(); renderShopList(); renderBudget(); }
 
 // ─── STOCK ──────────────────────────────────────────────
 function renderStock() {
-  const q = (document.getElementById('search').value||'').toLowerCase();
+  const q = (document.getElementById('search')?.value||'').toLowerCase();
   const cont = document.getElementById('stock-list');
   cont.innerHTML = '';
   Object.keys(CATS).forEach(ck => {
@@ -1264,7 +1264,7 @@ Object.assign(window, {
   openPrice, savePrice, openEditProduct, saveEdit, deleteProduct,
   toggleDone, updateShopField, rerenderShopCard, verResumen,
   confirmarCompra, limpiarLista, addProduct, installApp,
-  openModal, closeModal, setUser
+  openModal, closeModal, setUser, renderStock, renderShopList
 });
 </script>
 </body>
