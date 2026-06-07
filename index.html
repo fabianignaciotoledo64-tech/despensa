@@ -1190,16 +1190,18 @@ const db = getDatabase(fbApp);
 
 let fbLoaded = false;
 let syncTimeout = null;
+let localWriteTs = 0;
 
 function syncToFirebase() {
   clearTimeout(syncTimeout);
   syncTimeout = setTimeout(() => {
     try {
+      localWriteTs = Date.now();
       set(ref(db, 'despensa'), {
         products: products,
         doneIds: [...doneIds],
         shopData: shopData,
-        updatedAt: Date.now()
+        updatedAt: localWriteTs
       });
       document.getElementById('sdot').style.background = '#16a34a';
       document.getElementById('stext').textContent = 'Sincronizado';
@@ -1217,24 +1219,19 @@ function initFirebase() {
   onValue(ref(db, 'despensa'), (snapshot) => {
     const data = snapshot.val();
     if (!data) {
-      // Primera vez: subir datos locales a Firebase
       syncToFirebase();
       fbLoaded = true;
       return;
     }
-    // Actualizar local con datos de Firebase
-    if (data.products) {
-      products = data.products;
-      save();
+    if (data.updatedAt && data.updatedAt === localWriteTs) {
+      fbLoaded = true;
+      document.getElementById('sdot').style.background = '#16a34a';
+      document.getElementById('stext').textContent = 'Sincronizado';
+      return;
     }
-    if (data.doneIds) {
-      doneIds = new Set(data.doneIds);
-      saveDone();
-    }
-    if (data.shopData) {
-      shopData = data.shopData;
-      saveShopData();
-    }
+    if (data.products) { products = data.products; try { localStorage.setItem(STORE_KEY, JSON.stringify(products)); } catch(e){} }
+    if (data.doneIds)  { doneIds = new Set(data.doneIds); try { localStorage.setItem(DONE_KEY, JSON.stringify([...doneIds])); } catch(e){} }
+    if (data.shopData) { shopData = data.shopData; try { localStorage.setItem(SHOP_KEY, JSON.stringify(shopData)); } catch(e){} }
     document.getElementById('sdot').style.background = '#16a34a';
     document.getElementById('stext').textContent = 'Sincronizado';
     fbLoaded = true;
