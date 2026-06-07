@@ -1,5 +1,5 @@
-const CACHE = 'despensa-v4';
-const FILES = ['/', '/index.html', '/manifest.json'];
+const CACHE = 'despensa-v5';
+const FILES = ['/despensa/', '/despensa/index.html', '/despensa/manifest.json'];
 
 self.addEventListener('install', e => {
   e.waitUntil(
