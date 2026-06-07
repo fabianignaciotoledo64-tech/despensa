@@ -167,7 +167,13 @@ body {
   color: var(--text); transition: background .1s;
 }
 .qty-btn:active { background: var(--bg3); }
-.qty-num { min-width: 24px; text-align: center; font-size: 14px; font-weight: 700; font-family: 'Helvetica Neue', sans-serif; }
+.qty-num {
+  min-width: 28px; text-align: center; font-size: 14px; font-weight: 700;
+  font-family: 'Helvetica Neue', sans-serif;
+  cursor: pointer; padding: 2px 4px; border-radius: 6px;
+  transition: background .1s;
+}
+.qty-num:active { background: var(--bg2); }
 .qty-zero { color: var(--text3); }
 .qty-low  { color: var(--red); }
 
@@ -181,11 +187,15 @@ body {
 .total-label { font-size: 12px; color: var(--text2); font-family: 'Helvetica Neue', sans-serif; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; }
 .total-amount { font-size: 24px; font-weight: 700; letter-spacing: -0.5px; }
 .section-sep { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--text3); font-family: 'Helvetica Neue', sans-serif; padding: 12px 0 6px; }
+
+/* SHOP CARD - lista de compras */
 .shop-card {
-  display: flex; align-items: flex-start; gap: 10px;
   background: var(--card); border: 1px solid var(--border);
   border-radius: var(--radius); padding: 11px 12px; margin-bottom: 5px;
   box-shadow: var(--shadow);
+}
+.shop-card-top {
+  display: flex; align-items: flex-start; gap: 10px;
 }
 .check-circle {
   width: 22px; height: 22px; border-radius: 50%;
@@ -199,14 +209,80 @@ body {
 .shop-name.done { text-decoration: line-through; color: var(--text3); }
 .shop-sub { font-size: 11px; color: var(--text2); font-family: 'Helvetica Neue', sans-serif; margin-top: 2px; }
 .shop-price { font-size: 13px; font-weight: 700; color: var(--blue); white-space: nowrap; flex-shrink: 0; font-family: 'Helvetica Neue', sans-serif; }
+
+/* CAMPOS DE COMPRA en lista */
+.shop-fields {
+  display: flex; gap: 8px; margin-top: 10px;
+  padding-top: 10px; border-top: 1px solid var(--border);
+}
+.shop-field {
+  flex: 1; display: flex; flex-direction: column; gap: 3px;
+}
+.shop-field label {
+  font-size: 10px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .06em; color: var(--text3);
+  font-family: 'Helvetica Neue', sans-serif;
+}
+.shop-field input {
+  width: 100%; padding: 7px 10px; border-radius: var(--radius-sm);
+  border: 1px solid var(--border); background: var(--bg2);
+  color: var(--text); font-size: 14px; font-family: 'Helvetica Neue', sans-serif;
+  outline: none; transition: border-color .15s;
+  -webkit-appearance: none;
+}
+.shop-field input:focus { border-color: var(--blue); background: var(--card); }
+.shop-subtotal {
+  font-size: 12px; color: var(--text2); font-family: 'Helvetica Neue', sans-serif;
+  text-align: right; margin-top: 6px; padding-top: 4px;
+  border-top: 1px solid var(--border); font-weight: 600;
+}
+.shop-subtotal span { color: var(--blue); }
+
+/* TOTAL PARCIAL EN TIEMPO REAL */
+.running-total {
+  position: sticky; bottom: 0; background: var(--bg);
+  padding: 10px 0 4px; margin: 0 -16px; padding: 10px 16px 4px;
+  border-top: 1px solid var(--border);
+  display: flex; justify-content: space-between; align-items: center;
+  z-index: 5;
+}
+.running-total-label { font-size: 12px; color: var(--text2); font-family: 'Helvetica Neue', sans-serif; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; }
+.running-total-amount { font-size: 22px; font-weight: 700; letter-spacing: -0.5px; color: var(--blue); }
+
 .btn-clear {
-  display: block; width: 100%; margin-top: 12px; padding: 11px;
+  display: block; width: 100%; margin-top: 12px; margin-bottom: 60px; padding: 11px;
+  background: var(--green); border: none;
+  border-radius: var(--radius); color: #fff;
+  font-size: 13px; font-weight: 700; cursor: pointer; font-family: inherit;
+  transition: opacity .15s;
+}
+.btn-clear:active { opacity: .8; }
+.btn-clear-sec {
+  display: block; width: 100%; margin-top: 8px; margin-bottom: 60px; padding: 11px;
   background: var(--bg2); border: 1px solid var(--border);
   border-radius: var(--radius); color: var(--text2);
   font-size: 13px; cursor: pointer; font-family: inherit;
   transition: background .15s;
 }
-.btn-clear:active { background: var(--bg3); }
+.btn-clear-sec:active { background: var(--bg3); }
+
+/* RESUMEN FINAL */
+.resumen-card {
+  background: var(--text); color: var(--bg);
+  border-radius: var(--radius); padding: 16px;
+  margin-bottom: 12px; box-shadow: var(--shadow);
+}
+.resumen-title { font-size: 11px; font-family: 'Helvetica Neue', sans-serif; font-weight: 600; text-transform: uppercase; letter-spacing: .07em; opacity: .6; }
+.resumen-total { font-size: 32px; font-weight: 700; letter-spacing: -1px; margin-top: 4px; }
+.resumen-sub { font-size: 12px; opacity: .5; font-family: 'Helvetica Neue', sans-serif; margin-top: 2px; }
+.resumen-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 8px 0; border-bottom: 1px solid var(--border);
+  font-size: 13px; font-family: 'Helvetica Neue', sans-serif;
+}
+.resumen-row:last-child { border-bottom: none; }
+.resumen-row-label { color: var(--text2); }
+.resumen-row-val { font-weight: 700; color: var(--blue); }
 
 /* PRESUPUESTO */
 .grand-card {
@@ -275,11 +351,44 @@ body {
   outline: none; margin-bottom: 12px;
 }
 .modal-input:focus { border-color: var(--blue); }
+.modal-input-sm {
+  width: 100%; padding: 10px 12px; border-radius: var(--radius);
+  border: 1px solid var(--border); background: var(--bg2);
+  color: var(--text); font-size: 15px; font-family: 'Helvetica Neue', sans-serif;
+  outline: none; margin-bottom: 10px;
+}
+.modal-input-sm:focus { border-color: var(--blue); }
+.modal-select {
+  width: 100%; padding: 10px 12px; border-radius: var(--radius);
+  border: 1px solid var(--border); background: var(--bg2);
+  color: var(--text); font-size: 15px; font-family: 'Helvetica Neue', sans-serif;
+  outline: none; margin-bottom: 10px;
+}
+.modal-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--text2); font-family: 'Helvetica Neue', sans-serif; margin-bottom: 5px; display: block; }
+.modal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+.modal-grid > div { display: flex; flex-direction: column; }
 .btn-save {
   width: 100%; padding: 13px; background: var(--blue); color: #fff;
   border: none; border-radius: var(--radius); font-size: 16px;
-  font-family: inherit; font-weight: 700; cursor: pointer;
+  font-family: inherit; font-weight: 700; cursor: pointer; margin-bottom: 8px;
 }
+.btn-delete {
+  width: 100%; padding: 11px; background: none; color: var(--red);
+  border: 1px solid var(--red); border-radius: var(--radius); font-size: 14px;
+  font-family: inherit; cursor: pointer;
+}
+.btn-delete:active { background: #fef2f2; }
+
+/* MODAL STOCK */
+.stock-big-input {
+  width: 100%; padding: 14px; border-radius: var(--radius);
+  border: 2px solid var(--border); background: var(--bg2);
+  color: var(--text); font-size: 28px; font-weight: 700;
+  font-family: 'Helvetica Neue', sans-serif; text-align: center;
+  outline: none; margin-bottom: 12px;
+}
+.stock-big-input:focus { border-color: var(--blue); }
+
 .user-opt {
   display: flex; align-items: center; gap: 12px;
   padding: 12px; border-radius: var(--radius); cursor: pointer;
@@ -294,6 +403,9 @@ body {
 .empty-icon { font-size: 40px; margin-bottom: 10px; }
 .install-tip { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: var(--radius); padding: 12px 14px; margin-bottom: 12px; font-size: 12px; color: #1e40af; font-family: 'Helvetica Neue', sans-serif; display: none; }
 .install-tip.show { display: block; }
+
+/* VISTA DE LISTA - estado */
+#panel-lista { padding-bottom: 80px; }
 </style>
 </head>
 <body>
@@ -322,6 +434,7 @@ body {
   </div>
 
   <div class="panels">
+    <!-- STOCK -->
     <div class="panel active" id="panel-stock">
       <div class="search-wrap">
         <input class="search-input" type="search" placeholder="Buscar producto..." id="search" oninput="renderStock()">
@@ -329,15 +442,17 @@ body {
       <div id="stock-list"></div>
     </div>
 
+    <!-- LISTA DE COMPRAS -->
     <div class="panel" id="panel-lista">
       <div id="shop-list"></div>
-      <button class="btn-clear" onclick="clearDone()">✓ Marcar como comprado y actualizar stock</button>
     </div>
 
+    <!-- PRESUPUESTO -->
     <div class="panel" id="panel-presup">
       <div id="budget-list"></div>
     </div>
 
+    <!-- AGREGAR -->
     <div class="panel" id="panel-add">
       <div class="form-card">
         <label>Nombre</label>
@@ -367,7 +482,7 @@ body {
   </div>
 </div>
 
-<!-- MODALES -->
+<!-- MODAL: USUARIO -->
 <div class="modal-overlay" id="user-modal">
   <div class="modal-sheet">
     <div class="modal-handle"></div>
@@ -384,6 +499,7 @@ body {
   </div>
 </div>
 
+<!-- MODAL: PRECIO (desde stock) -->
 <div class="modal-overlay" id="price-modal">
   <div class="modal-sheet">
     <div class="modal-handle"></div>
@@ -395,10 +511,70 @@ body {
   </div>
 </div>
 
+<!-- MODAL: EDITAR PRODUCTO -->
+<div class="modal-overlay" id="edit-modal">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <button class="modal-close" onclick="closeModal('edit-modal')">×</button>
+    <div class="modal-title">Editar producto</div>
+    <label class="modal-label">Nombre</label>
+    <input class="modal-input-sm" type="text" id="em-name" placeholder="Nombre del producto">
+    <label class="modal-label">Categoría</label>
+    <select class="modal-select" id="em-cat">
+      <option value="supermercado">🏪 Supermercado</option>
+      <option value="carniceria">🥩 Carnicería</option>
+      <option value="verduleria">🥦 Verdulería</option>
+      <option value="fiambreria">🧀 Fiambrería</option>
+      <option value="limpieza">🧹 Limpieza e higiene</option>
+    </select>
+    <div class="modal-grid">
+      <div>
+        <label class="modal-label">Mínimo</label>
+        <input class="modal-input-sm" type="number" id="em-min" placeholder="1" min="0">
+      </div>
+      <div>
+        <label class="modal-label">Unidad</label>
+        <select class="modal-select" id="em-unit" style="margin-bottom:0">
+          <option>unidad</option><option>kg</option><option>g</option>
+          <option>L</option><option>ml</option><option>paquete</option>
+          <option>maple</option><option>docena</option>
+        </select>
+      </div>
+    </div>
+    <button class="btn-save" onclick="saveEdit()">Guardar cambios</button>
+    <button class="btn-delete" onclick="deleteProduct()">🗑 Eliminar producto</button>
+  </div>
+</div>
+
+<!-- MODAL: EDITAR STOCK DIRECTO -->
+<div class="modal-overlay" id="stock-modal">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <button class="modal-close" onclick="closeModal('stock-modal')">×</button>
+    <div class="modal-title" id="sm-title">Stock actual</div>
+    <div style="font-size:13px;color:var(--text2);font-family:'Helvetica Neue',sans-serif;margin-bottom:8px;" id="sm-sub">Ingresá la cantidad actual</div>
+    <input class="stock-big-input" type="number" id="sm-input" inputmode="numeric" placeholder="0" min="0">
+    <button class="btn-save" onclick="saveStock()">Actualizar stock</button>
+  </div>
+</div>
+
+<!-- MODAL: RESUMEN DE COMPRA -->
+<div class="modal-overlay" id="resumen-modal">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <button class="modal-close" onclick="closeModal('resumen-modal')">×</button>
+    <div class="modal-title">Resumen de compra</div>
+    <div id="resumen-content"></div>
+    <button class="btn-save" onclick="confirmarCompra()" style="margin-top:12px">✓ Confirmar y actualizar stock</button>
+    <button class="btn-clear-sec" style="margin-top:0" onclick="closeModal('resumen-modal')">Seguir comprando</button>
+  </div>
+</div>
+
 <script>
 const STORE_KEY = 'despensa-v4';
 const DONE_KEY  = 'despensa-v4-done';
 const USER_KEY  = 'despensa-v4-user';
+const SHOP_KEY  = 'despensa-v4-shop'; // cantidades y precios de la lista de compras
 
 const CATS = {
   supermercado: { label:'Supermercado',       emoji:'🏪', color:'#2563eb' },
@@ -526,17 +702,23 @@ const DEFAULTS = [
 ];
 
 let products = [], doneIds = new Set(), currentUser = 'yo';
-let openCats = new Set(Object.keys(CATS)), editPriceId = null;
+let openCats = new Set(Object.keys(CATS));
+let editPriceId = null, editProductId = null, editStockId = null;
+// shopData: { [productId]: { qty: number, price: number } }
+let shopData = {};
 
 const fmt = n => n ? '$\u202f' + Math.round(n).toLocaleString('es-AR') : '—';
 const needsBuying = p => p.stock <= p.min;
 
-// STORAGE — usa localStorage para la PWA instalada
+// ─── STORAGE ────────────────────────────────────────────
 function save() {
   try { localStorage.setItem(STORE_KEY, JSON.stringify(products)); } catch(e){}
 }
 function saveDone() {
   try { localStorage.setItem(DONE_KEY, JSON.stringify([...doneIds])); } catch(e){}
+}
+function saveShopData() {
+  try { localStorage.setItem(SHOP_KEY, JSON.stringify(shopData)); } catch(e){}
 }
 function load() {
   try {
@@ -547,6 +729,8 @@ function load() {
     if (d) doneIds = new Set(JSON.parse(d));
     const u = localStorage.getItem(USER_KEY);
     if (u) currentUser = u;
+    const s = localStorage.getItem(SHOP_KEY);
+    if (s) shopData = JSON.parse(s);
   } catch(e) {
     products = JSON.parse(JSON.stringify(DEFAULTS));
   }
@@ -555,6 +739,7 @@ function load() {
   applyUser(); renderAll();
 }
 
+// ─── USUARIO ────────────────────────────────────────────
 function applyUser() {
   const yo = currentUser === 'yo';
   document.getElementById('udot').style.background = yo ? '#2563eb' : '#db2777';
@@ -568,9 +753,11 @@ function setUser(u) {
   applyUser(); closeModal('user-modal');
 }
 
+// ─── MODALES ────────────────────────────────────────────
 function openModal(id) { document.getElementById(id).classList.add('open'); }
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
 
+// ─── TABS ───────────────────────────────────────────────
 function switchTab(t) {
   const names = ['stock','lista','presup','add'];
   document.querySelectorAll('.tab').forEach((el,i) => el.classList.toggle('active', names[i]===t));
@@ -583,6 +770,7 @@ function switchTab(t) {
 
 function renderAll() { renderStock(); renderShopList(); renderBudget(); }
 
+// ─── STOCK ──────────────────────────────────────────────
 function renderStock() {
   const q = (document.getElementById('search').value||'').toLowerCase();
   const cont = document.getElementById('stock-list');
@@ -614,10 +802,10 @@ function renderStock() {
                 ${low?`<span class="low-warn">⚠ mín:${p.min}</span>`:''}
               </div>
             </div>
-            <button class="edit-btn" onclick="openPrice('${p.id}')">✏️</button>
+            <button class="edit-btn" title="Editar producto" onclick="openEditProduct('${p.id}')">✏️</button>
             <div class="qty-ctrl">
               <button class="qty-btn" onclick="chQty('${p.id}',-1)">−</button>
-              <span class="qty-num ${p.stock===0?'qty-zero':''} ${low?'qty-low':''}">${p.stock}</span>
+              <span class="qty-num ${p.stock===0?'qty-zero':''} ${low?'qty-low':''}" onclick="openStockModal('${p.id}')" title="Tocar para editar">${p.stock}</span>
               <button class="qty-btn" onclick="chQty('${p.id}',1)">+</button>
             </div>
           </div>`;
@@ -638,6 +826,28 @@ function chQty(id, d) {
   save(); renderStock(); renderShopList(); renderBudget();
 }
 
+// ─── EDITAR STOCK DIRECTO ───────────────────────────────
+function openStockModal(id) {
+  const p = products.find(x=>x.id===id);
+  if (!p) return;
+  editStockId = id;
+  document.getElementById('sm-title').textContent = p.name;
+  document.getElementById('sm-sub').textContent = `Stock actual: ${p.stock} ${p.unit} · Mínimo: ${p.min}`;
+  document.getElementById('sm-input').value = p.stock;
+  openModal('stock-modal');
+  setTimeout(()=>{ const i=document.getElementById('sm-input'); i.focus(); i.select(); },200);
+}
+function saveStock() {
+  const p = products.find(x=>x.id===editStockId);
+  if (p) {
+    const v = parseInt(document.getElementById('sm-input').value);
+    p.stock = isNaN(v) ? p.stock : Math.max(0, v);
+    save(); renderAll();
+  }
+  closeModal('stock-modal');
+}
+
+// ─── EDITAR PRECIO (desde stock) ───────────────────────
 function openPrice(id) {
   const p = products.find(x=>x.id===id);
   if (!p) return;
@@ -654,110 +864,305 @@ function savePrice() {
   closeModal('price-modal');
 }
 
+// ─── EDITAR / ELIMINAR PRODUCTO ─────────────────────────
+function openEditProduct(id) {
+  const p = products.find(x=>x.id===id);
+  if (!p) return;
+  editProductId = id;
+  document.getElementById('em-name').value = p.name;
+  document.getElementById('em-cat').value = p.cat;
+  document.getElementById('em-min').value = p.min;
+  document.getElementById('em-unit').value = p.unit;
+  openModal('edit-modal');
+  setTimeout(()=>document.getElementById('em-name').focus(),200);
+}
+function saveEdit() {
+  const p = products.find(x=>x.id===editProductId);
+  if (p) {
+    p.name = document.getElementById('em-name').value.trim() || p.name;
+    p.cat  = document.getElementById('em-cat').value;
+    p.min  = parseInt(document.getElementById('em-min').value) || p.min;
+    p.unit = document.getElementById('em-unit').value;
+    save(); renderAll();
+  }
+  closeModal('edit-modal');
+}
+function deleteProduct() {
+  if (!confirm('¿Eliminar este producto?')) return;
+  products = products.filter(x=>x.id!==editProductId);
+  save(); renderAll();
+  closeModal('edit-modal');
+}
+
+// ─── LISTA DE COMPRAS ───────────────────────────────────
+function getShopEntry(p) {
+  if (!shopData[p.id]) {
+    shopData[p.id] = {
+      qty: Math.max(1, p.min - p.stock + 1),
+      price: p.price || 0
+    };
+  }
+  return shopData[p.id];
+}
+
+function updateShopField(id, field, value) {
+  if (!shopData[id]) shopData[id] = { qty: 1, price: 0 };
+  const v = parseFloat(value) || 0;
+  shopData[id][field] = field === 'qty' ? Math.max(0, Math.round(v)) : Math.max(0, v);
+  saveShopData();
+  updateRunningTotal();
+}
+
+function updateRunningTotal() {
+  const needed = products.filter(p => needsBuying(p) || doneIds.has(p.id));
+  let total = 0;
+  needed.forEach(p => {
+    const entry = shopData[p.id];
+    if (entry && entry.qty > 0 && entry.price > 0) {
+      total += entry.qty * entry.price;
+    }
+  });
+  const el = document.getElementById('running-total-val');
+  if (el) el.textContent = total > 0 ? fmt(total) : '—';
+}
+
 function renderShopList() {
   const cont = document.getElementById('shop-list');
-  const needed = products.filter(p=>needsBuying(p)||doneIds.has(p.id));
+  const needed = products.filter(p => needsBuying(p) || doneIds.has(p.id));
+
   if (!needed.length) {
     cont.innerHTML = `<div class="empty"><div class="empty-icon">✅</div>¡Todo completo!</div>`;
     return;
   }
-  let total = 0, html = '';
-  Object.keys(CATS).forEach(ck=>{
-    const cat=CATS[ck], items=needed.filter(p=>p.cat===ck);
+
+  // Inicializar shopData para los que no tienen entrada
+  needed.forEach(p => getShopEntry(p));
+
+  let html = '';
+  Object.keys(CATS).forEach(ck => {
+    const cat = CATS[ck];
+    const items = needed.filter(p => p.cat === ck);
     if (!items.length) return;
     html += `<div class="section-sep">${cat.emoji} ${cat.label}</div>`;
-    items.forEach(p=>{
-      const done=doneIds.has(p.id);
-      const qty=Math.max(1,p.min-p.stock+1);
-      const sub=p.price?p.price*qty:0;
-      if (!done&&sub) total+=sub;
-      html+=`<div class="shop-card">
-        <div class="check-circle ${done?'done':''}" onclick="toggleDone('${p.id}')">${done?'✓':''}</div>
-        <div class="shop-info">
-          <div class="shop-name ${done?'done':''}">${p.name}</div>
-          <div class="shop-sub">Comprar: <b>${qty} ${p.unit}</b> · Stock: ${p.stock}</div>
+    items.forEach(p => {
+      const done = doneIds.has(p.id);
+      const entry = shopData[p.id] || { qty: 1, price: p.price || 0 };
+      const sub = entry.qty > 0 && entry.price > 0 ? entry.qty * entry.price : 0;
+      html += `<div class="shop-card" id="sc-${p.id}">
+        <div class="shop-card-top">
+          <div class="check-circle ${done?'done':''}" onclick="toggleDone('${p.id}')">${done?'✓':''}</div>
+          <div class="shop-info">
+            <div class="shop-name ${done?'done':''}">${p.name}</div>
+            <div class="shop-sub">Stock: ${p.stock} ${p.unit} · Mín: ${p.min}</div>
+          </div>
+          ${sub > 0 ? `<div class="shop-price">${fmt(sub)}</div>` : '<div style="font-size:11px;color:var(--text3)">—</div>'}
         </div>
-        ${p.price?`<div class="shop-price">${fmt(sub)}</div>`:'<div style="font-size:11px;color:var(--text3)">—</div>'}
+        <div class="shop-fields">
+          <div class="shop-field">
+            <label>Cantidad</label>
+            <input type="number" inputmode="numeric" value="${entry.qty}" min="0"
+              onchange="updateShopField('${p.id}','qty',this.value); rerenderShopCard('${p.id}')">
+          </div>
+          <div class="shop-field">
+            <label>Precio $ / ${p.unit}</label>
+            <input type="number" inputmode="decimal" value="${entry.price || ''}" placeholder="—"
+              onchange="updateShopField('${p.id}','price',this.value); rerenderShopCard('${p.id}')">
+          </div>
+        </div>
+        ${sub > 0 ? `<div class="shop-subtotal">Subtotal: <span>${fmt(sub)}</span></div>` : ''}
       </div>`;
     });
   });
-  if (total>0) html = `<div class="total-banner"><div><div class="total-label">Total estimado</div></div><div class="total-amount">${fmt(total)}</div></div>`+html;
+
+  // Total parcial sticky + botones
+  html += `
+    <div class="running-total">
+      <div class="running-total-label">Total parcial</div>
+      <div class="running-total-amount" id="running-total-val">—</div>
+    </div>
+    <button class="btn-clear" onclick="verResumen()">Ver resumen y confirmar compra</button>
+    <button class="btn-clear-sec" onclick="limpiarLista()">Vaciar lista sin actualizar stock</button>
+  `;
+
   cont.innerHTML = html;
+  updateRunningTotal();
+}
+
+function rerenderShopCard(id) {
+  // Re-renderiza solo el precio y subtotal de una card sin perder el foco
+  const p = products.find(x => x.id === id);
+  if (!p) return;
+  const entry = shopData[id] || { qty: 1, price: 0 };
+  const sub = entry.qty > 0 && entry.price > 0 ? entry.qty * entry.price : 0;
+  const card = document.getElementById('sc-' + id);
+  if (!card) return;
+  // Actualizar precio en el header
+  const priceEl = card.querySelector('.shop-price, [style*="text3"]');
+  if (priceEl) priceEl.outerHTML = sub > 0 ? `<div class="shop-price">${fmt(sub)}</div>` : '<div style="font-size:11px;color:var(--text3)">—</div>';
+  // Actualizar subtotal
+  let subEl = card.querySelector('.shop-subtotal');
+  if (sub > 0) {
+    if (subEl) subEl.innerHTML = `Subtotal: <span>${fmt(sub)}</span>`;
+    else { const s = document.createElement('div'); s.className='shop-subtotal'; s.innerHTML=`Subtotal: <span>${fmt(sub)}</span>`; card.appendChild(s); }
+  } else {
+    if (subEl) subEl.remove();
+  }
+  updateRunningTotal();
 }
 
 function toggleDone(id) {
-  doneIds.has(id)?doneIds.delete(id):doneIds.add(id);
-  saveDone(); renderShopList();
-}
-function clearDone() {
-  for (const id of doneIds) {
-    const p=products.find(x=>x.id===id);
-    if (p) p.stock=p.min+1;
+  doneIds.has(id) ? doneIds.delete(id) : doneIds.add(id);
+  saveDone();
+  // Solo actualizar clase del check-circle sin re-renderizar todo
+  const card = document.getElementById('sc-' + id);
+  if (card) {
+    const cc = card.querySelector('.check-circle');
+    const sn = card.querySelector('.shop-name');
+    const done = doneIds.has(id);
+    if (cc) { cc.classList.toggle('done', done); cc.textContent = done ? '✓' : ''; }
+    if (sn) sn.classList.toggle('done', done);
   }
-  doneIds.clear(); save(); saveDone(); renderAll();
 }
 
+function verResumen() {
+  const needed = products.filter(p => needsBuying(p) || doneIds.has(p.id));
+  let grand = 0;
+  const bycat = {};
+  Object.keys(CATS).forEach(k => { bycat[k] = { items: [], total: 0 }; });
+
+  needed.forEach(p => {
+    const entry = shopData[p.id] || { qty: 0, price: 0 };
+    const sub = entry.qty > 0 && entry.price > 0 ? entry.qty * entry.price : 0;
+    grand += sub;
+    bycat[p.cat].total += sub;
+    bycat[p.cat].items.push({ name: p.name, qty: entry.qty, unit: p.unit, sub });
+  });
+
+  let html = `<div class="resumen-card">
+    <div class="resumen-title">Total de la compra</div>
+    <div class="resumen-total">${grand > 0 ? fmt(grand) : '—'}</div>
+    <div class="resumen-sub">${needed.length} productos</div>
+  </div>`;
+
+  Object.keys(CATS).forEach(k => {
+    if (!bycat[k].items.length) return;
+    const cat = CATS[k];
+    html += `<div class="budget-card">
+      <div class="bcat-row">
+        <span style="font-size:18px">${cat.emoji}</span>
+        <span class="bcat-name">${cat.label}</span>
+        <span class="bcat-total">${bycat[k].total > 0 ? fmt(bycat[k].total) : '—'}</span>
+      </div>
+      <div>${bycat[k].items.map(i =>
+        `<div class="bitem">
+          <span class="bitem-name">${i.name} <span style="opacity:.5">${i.qty} ${i.unit}</span></span>
+          <span class="bitem-price">${i.sub > 0 ? fmt(i.sub) : '—'}</span>
+        </div>`
+      ).join('')}</div>
+    </div>`;
+  });
+
+  document.getElementById('resumen-content').innerHTML = html;
+  openModal('resumen-modal');
+}
+
+function confirmarCompra() {
+  const needed = products.filter(p => needsBuying(p) || doneIds.has(p.id));
+  needed.forEach(p => {
+    const entry = shopData[p.id];
+    if (entry && entry.qty > 0) {
+      p.stock = p.stock + entry.qty;
+      if (entry.price > 0) p.price = entry.price;
+    }
+  });
+  // Limpiar lista
+  doneIds.clear();
+  shopData = {};
+  save(); saveDone(); saveShopData();
+  closeModal('resumen-modal');
+  renderAll();
+  switchTab('stock');
+}
+
+function limpiarLista() {
+  if (!confirm('¿Vaciar la lista sin actualizar el stock?')) return;
+  doneIds.clear();
+  shopData = {};
+  saveDone(); saveShopData();
+  renderShopList();
+}
+
+// ─── PRESUPUESTO ────────────────────────────────────────
 function renderBudget() {
   const cont = document.getElementById('budget-list');
   const needed = products.filter(needsBuying);
-  let grand=0;
-  const cd={};
-  Object.keys(CATS).forEach(k=>{cd[k]={total:0,items:[]};});
-  needed.forEach(p=>{
-    const qty=Math.max(1,p.min-p.stock+1);
-    const sub=p.price?p.price*qty:0;
-    grand+=sub; cd[p.cat].total+=sub;
-    cd[p.cat].items.push({name:p.name,qty,unit:p.unit,price:p.price,sub});
+  let grand = 0;
+  const cd = {};
+  Object.keys(CATS).forEach(k => { cd[k] = { total: 0, items: [] }; });
+  needed.forEach(p => {
+    const qty = Math.max(1, p.min - p.stock + 1);
+    const sub = p.price ? p.price * qty : 0;
+    grand += sub; cd[p.cat].total += sub;
+    cd[p.cat].items.push({ name: p.name, qty, unit: p.unit, price: p.price, sub });
   });
-  const maxT=Math.max(...Object.values(cd).map(c=>c.total),1);
-  let html=`<div class="grand-card">
+  const maxT = Math.max(...Object.values(cd).map(c => c.total), 1);
+  let html = `<div class="grand-card">
     <div class="grand-lbl">Total estimado</div>
     <div class="grand-num">${fmt(grand)}</div>
     <div class="grand-sub">${needed.length} productos por reponer</div>
   </div>`;
-  Object.keys(CATS).forEach(k=>{
-    const cat=CATS[k],d=cd[k];
+  Object.keys(CATS).forEach(k => {
+    const cat = CATS[k], d = cd[k];
     if (!d.items.length) return;
-    const pct=Math.round(d.total/maxT*100);
-    html+=`<div class="budget-card">
+    const pct = Math.round(d.total / maxT * 100);
+    html += `<div class="budget-card">
       <div class="bcat-row">
         <span style="font-size:18px">${cat.emoji}</span>
         <span class="bcat-name">${cat.label}</span>
         <span class="bcat-total">${fmt(d.total)}</span>
       </div>
       <div class="bar-bg"><div class="bar-fill" style="width:${pct}%;background:${cat.color}"></div></div>
-      <div>${d.items.map(i=>`<div class="bitem"><span class="bitem-name">${i.name} <span style="opacity:.5">${i.qty} ${i.unit}</span></span><span class="bitem-price">${i.price?fmt(i.sub):'—'}</span></div>`).join('')}</div>
+      <div>${d.items.map(i =>
+        `<div class="bitem">
+          <span class="bitem-name">${i.name} <span style="opacity:.5">${i.qty} ${i.unit}</span></span>
+          <span class="bitem-price">${i.price ? fmt(i.sub) : '—'}</span>
+        </div>`
+      ).join('')}</div>
     </div>`;
   });
-  if (!needed.length) html+=`<div class="empty"><div class="empty-icon">✅</div>No falta nada</div>`;
-  cont.innerHTML=html;
+  if (!needed.length) html += `<div class="empty"><div class="empty-icon">✅</div>No falta nada</div>`;
+  cont.innerHTML = html;
 }
 
+// ─── AGREGAR PRODUCTO ───────────────────────────────────
 function addProduct() {
-  const name=document.getElementById('fn').value.trim();
-  if (!name){alert('Ingresá un nombre');return;}
-  products.push({id:'p'+Date.now(),name,cat:document.getElementById('fc').value,
-    stock:parseInt(document.getElementById('fs').value)||0,
-    min:parseInt(document.getElementById('fm').value)||1,
-    price:parseFloat(document.getElementById('fp').value)||0,
-    unit:document.getElementById('fu').value});
-  ['fn','fs','fm','fp'].forEach(id=>document.getElementById(id).value='');
+  const name = document.getElementById('fn').value.trim();
+  if (!name) { alert('Ingresá un nombre'); return; }
+  products.push({
+    id: 'p' + Date.now(),
+    name,
+    cat: document.getElementById('fc').value,
+    stock: parseInt(document.getElementById('fs').value) || 0,
+    min: parseInt(document.getElementById('fm').value) || 1,
+    price: parseFloat(document.getElementById('fp').value) || 0,
+    unit: document.getElementById('fu').value
+  });
+  ['fn','fs','fm','fp'].forEach(id => document.getElementById(id).value = '');
   save(); switchTab('stock');
 }
 
-// PWA INSTALL PROMPT
+// ─── PWA INSTALL ────────────────────────────────────────
 let deferredPrompt = null;
 window.addEventListener('beforeinstallprompt', e => {
   e.preventDefault(); deferredPrompt = e;
   const tip = document.getElementById('install-tip');
   tip.className = 'install-tip show';
-  tip.innerHTML = `📲 <b>Instalá la app:</b> <a href="#" onclick="installApp();return false;" style="color:inherit;font-weight:700">Tocá aquí</a> para instalarla en tu dispositivo`;
+  tip.innerHTML = `📲 <b>Instalá la app:</b> <a href="#" onclick="installApp();return false;" style="color:inherit;font-weight:700">Tocá aquí</a>`;
 });
 function installApp() {
-  if (deferredPrompt) { deferredPrompt.prompt(); deferredPrompt=null; }
+  if (deferredPrompt) { deferredPrompt.prompt(); deferredPrompt = null; }
 }
 
-// Service Worker
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js');
 }
