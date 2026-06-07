@@ -444,6 +444,9 @@ body {
 
     <!-- LISTA DE COMPRAS -->
     <div class="panel" id="panel-lista">
+      <div class="search-wrap">
+        <input class="search-input" type="search" placeholder="Buscar en lista..." id="search-lista" oninput="renderShopList()">
+      </div>
       <div id="shop-list"></div>
     </div>
     <div class="running-total" id="running-total-bar" style="display:none">
@@ -807,7 +810,7 @@ function renderStock() {
               <div class="prod-name">${p.name}</div>
               <div class="prod-meta">
                 <span>${p.unit}</span>
-                ${p.price?`<span class="price-lbl">${fmt(p.price)}/${p.unit}</span>`:'<span style="font-style:italic">sin precio</span>'}
+                ${p.price?`<span class="price-lbl" onclick="openPrice('${p.id}')" style="cursor:pointer">${fmt(p.price)}/${p.unit}</span>`:`<span style="font-style:italic;cursor:pointer;color:var(--text3)" onclick="openPrice('${p.id}')">+ precio</span>`}
                 ${low?`<span class="low-warn">⚠ mín:${p.min}</span>`:''}
               </div>
             </div>
@@ -952,9 +955,11 @@ function renderShopList() {
   needed.forEach(p => getShopEntry(p));
 
   let html = '';
+  const ql = (document.getElementById('search-lista')?.value || '').toLowerCase();
+  const filteredNeeded = ql ? needed.filter(p => p.name.toLowerCase().includes(ql)) : needed;
   Object.keys(CATS).forEach(ck => {
     const cat = CATS[ck];
-    const items = needed.filter(p => p.cat === ck).sort((a,b) => a.name.localeCompare(b.name, 'es'));
+    const items = filteredNeeded.filter(p => p.cat === ck).sort((a,b) => a.name.localeCompare(b.name, 'es'));
     if (!items.length) return;
     html += `<div class="section-sep">${cat.emoji} ${cat.label}</div>`;
     items.forEach(p => {
