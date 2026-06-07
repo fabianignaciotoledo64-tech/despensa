@@ -240,11 +240,11 @@ body {
 
 /* TOTAL PARCIAL EN TIEMPO REAL */
 .running-total {
-  position: sticky; bottom: 0; background: var(--bg);
-  padding: 10px 0 4px; margin: 0 -16px; padding: 10px 16px 4px;
-  border-top: 1px solid var(--border);
+  position: fixed; bottom: 0; left: 0; right: 0;
+  background: var(--bg); padding: 10px 16px 12px;
+  border-top: 2px solid var(--border);
   display: flex; justify-content: space-between; align-items: center;
-  z-index: 5;
+  z-index: 20;
 }
 .running-total-label { font-size: 12px; color: var(--text2); font-family: 'Helvetica Neue', sans-serif; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; }
 .running-total-amount { font-size: 22px; font-weight: 700; letter-spacing: -0.5px; color: var(--blue); }
@@ -445,6 +445,10 @@ body {
     <!-- LISTA DE COMPRAS -->
     <div class="panel" id="panel-lista">
       <div id="shop-list"></div>
+    </div>
+    <div class="running-total" id="running-total-bar" style="display:none">
+      <div class="running-total-label">Total parcial</div>
+      <div class="running-total-amount" id="running-total-val">—</div>
     </div>
 
     <!-- PRESUPUESTO -->
@@ -766,6 +770,8 @@ function switchTab(t) {
   document.querySelectorAll('.tab').forEach((el,i) => el.classList.toggle('active', names[i]===t));
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   document.getElementById('panel-'+t).classList.add('active');
+  const bar = document.getElementById('running-total-bar');
+  if (bar) bar.style.display = t === 'lista' ? 'flex' : 'none';
   if (t==='lista') renderShopList();
   else if (t==='stock') renderStock();
   else if (t==='presup') renderBudget();
@@ -780,7 +786,7 @@ function renderStock() {
   cont.innerHTML = '';
   Object.keys(CATS).forEach(ck => {
     const cat = CATS[ck];
-    const items = products.filter(p => p.cat===ck && (!q || p.name.toLowerCase().includes(q)));
+    const items = products.filter(p => p.cat===ck && (!q || p.name.toLowerCase().includes(q))).sort((a,b) => a.name.localeCompare(b.name, 'es'));
     if (!items.length) return;
     const isOpen = openCats.has(ck);
     const lowN = items.filter(needsBuying).length;
@@ -903,7 +909,8 @@ function getShopEntry(p) {
   if (!shopData[p.id]) {
     shopData[p.id] = { qty: faltante, price: p.price || 0 };
   } else {
-    if (shopData[p.id].qty <= 1 && faltante > 1) shopData[p.id].qty = faltante;
+    // Siempre recalcular la cantidad basada en stock actual y mínimo
+    shopData[p.id].qty = faltante;
     if (!shopData[p.id].price && p.price) shopData[p.id].price = p.price;
   }
   return shopData[p.id];
@@ -928,6 +935,8 @@ function updateRunningTotal() {
   });
   const el = document.getElementById('running-total-val');
   if (el) el.textContent = total > 0 ? fmt(total) : '—';
+  const bar = document.getElementById('running-total-bar');
+  if (bar) bar.style.display = 'flex';
 }
 
 function renderShopList() {
@@ -945,7 +954,7 @@ function renderShopList() {
   let html = '';
   Object.keys(CATS).forEach(ck => {
     const cat = CATS[ck];
-    const items = needed.filter(p => p.cat === ck);
+    const items = needed.filter(p => p.cat === ck).sort((a,b) => a.name.localeCompare(b.name, 'es'));
     if (!items.length) return;
     html += `<div class="section-sep">${cat.emoji} ${cat.label}</div>`;
     items.forEach(p => {
@@ -980,10 +989,6 @@ function renderShopList() {
 
   // Total parcial sticky + botones
   html += `
-    <div class="running-total">
-      <div class="running-total-label">Total parcial</div>
-      <div class="running-total-amount" id="running-total-val">—</div>
-    </div>
     <button class="btn-clear" onclick="verResumen()">Ver resumen y confirmar compra</button>
     <button class="btn-clear-sec" onclick="limpiarLista()">Vaciar lista sin actualizar stock</button>
   `;
