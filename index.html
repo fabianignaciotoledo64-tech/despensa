@@ -899,11 +899,12 @@ function deleteProduct() {
 
 // ─── LISTA DE COMPRAS ───────────────────────────────────
 function getShopEntry(p) {
+  const faltante = Math.max(1, p.min - p.stock);
   if (!shopData[p.id]) {
-    shopData[p.id] = {
-      qty: Math.max(1, p.min - p.stock + 1),
-      price: p.price || 0
-    };
+    shopData[p.id] = { qty: faltante, price: p.price || 0 };
+  } else {
+    if (shopData[p.id].qty <= 1 && faltante > 1) shopData[p.id].qty = faltante;
+    if (!shopData[p.id].price && p.price) shopData[p.id].price = p.price;
   }
   return shopData[p.id];
 }
