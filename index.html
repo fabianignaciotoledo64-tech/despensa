@@ -1233,7 +1233,8 @@ function initFirebase() {
       fbLoaded = true;
       return;
     }
-    if (data.updatedAt && data.updatedAt === localWriteTs) {
+    // Solo ignorar si fue un write nuestro reciente (menos de 5 segundos)
+    if (data.updatedAt && data.updatedAt === localWriteTs && (Date.now() - localWriteTs) < 5000) {
       fbLoaded = true;
       document.getElementById('sdot').style.background = '#16a34a';
       document.getElementById('stext').textContent = 'Sincronizado';
