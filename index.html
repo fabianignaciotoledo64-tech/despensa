@@ -720,7 +720,7 @@ let editPriceId = null, editProductId = null, editStockId = null;
 let shopData = {};
 
 const fmt = n => n ? '$\u202f' + Math.round(n).toLocaleString('es-AR') : '—';
-const needsBuying = p => p.stock <= p.min;
+const needsBuying = p => p.stock < p.min;
 function fmtDate(iso) {
   if (!iso) return '';
   const d = new Date(iso);
