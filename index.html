@@ -471,6 +471,7 @@ body {
           <option value="verduleria">🥦 Verdulería</option>
           <option value="fiambreria">🧀 Fiambrería</option>
           <option value="limpieza">🧹 Limpieza e higiene</option>
+          <option value="congelados">🧊 Congelados</option>
         </select>
         <div class="form-grid">
           <div><label>Stock</label><input type="number" id="fs" placeholder="0" min="0"></div>
@@ -533,6 +534,7 @@ body {
       <option value="verduleria">🥦 Verdulería</option>
       <option value="fiambreria">🧀 Fiambrería</option>
       <option value="limpieza">🧹 Limpieza e higiene</option>
+      <option value="congelados">🧊 Congelados</option>
     </select>
     <div class="modal-grid">
       <div>
@@ -561,6 +563,8 @@ body {
     <div class="modal-title" id="sm-title">Stock actual</div>
     <div style="font-size:13px;color:var(--text2);font-family:'Helvetica Neue',sans-serif;margin-bottom:8px;" id="sm-sub">Ingresá la cantidad actual</div>
     <input class="stock-big-input" type="number" id="sm-input" inputmode="numeric" placeholder="0" min="0">
+    <label class="modal-label" style="margin-top:4px">Fecha última compra (opcional)</label>
+    <input class="modal-input-sm" type="date" id="sm-date" style="margin-bottom:12px">
     <button class="btn-save" onclick="saveStock()">Actualizar stock</button>
   </div>
 </div>
@@ -589,6 +593,7 @@ const CATS = {
   verduleria:   { label:'Verdulería',         emoji:'🥦', color:'#16a34a' },
   fiambreria:   { label:'Fiambrería',         emoji:'🧀', color:'#d97706' },
   limpieza:     { label:'Limpieza e higiene', emoji:'🧹', color:'#db2777' },
+  congelados:   { label:'Congelados',         emoji:'🧊', color:'#0891b2' },
 };
 
 const DEFAULTS = [
@@ -716,6 +721,11 @@ let shopData = {};
 
 const fmt = n => n ? '$\u202f' + Math.round(n).toLocaleString('es-AR') : '—';
 const needsBuying = p => p.stock <= p.min;
+function fmtDate(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  return d.toLocaleDateString('es-AR', { day:'numeric', month:'short' });
+}
 
 // ─── STORAGE ────────────────────────────────────────────
 function save() {
@@ -811,6 +821,7 @@ function renderStock() {
               <div class="prod-meta">
                 <span>${p.unit}</span>
                 ${p.price?`<span class="price-lbl" onclick="openPrice('${p.id}')" style="cursor:pointer">${fmt(p.price)}/${p.unit}</span>`:`<span style="font-style:italic;cursor:pointer;color:var(--text3)" onclick="openPrice('${p.id}')">+ precio</span>`}
+                ${p.lastBought?`<span style="color:var(--text3)">🛒 ${fmtDate(p.lastBought)}</span>`:''}
                 ${low?`<span class="low-warn">⚠ mín:${p.min}</span>`:''}
               </div>
             </div>
@@ -846,6 +857,7 @@ function openStockModal(id) {
   document.getElementById('sm-title').textContent = p.name;
   document.getElementById('sm-sub').textContent = `Stock actual: ${p.stock} ${p.unit} · Mínimo: ${p.min}`;
   document.getElementById('sm-input').value = p.stock;
+  document.getElementById('sm-date').value = p.lastBought ? p.lastBought.slice(0,10) : '';
   openModal('stock-modal');
   setTimeout(()=>{ const i=document.getElementById('sm-input'); i.focus(); i.select(); },200);
 }
@@ -854,6 +866,8 @@ function saveStock() {
   if (p) {
     const v = parseInt(document.getElementById('sm-input').value);
     p.stock = isNaN(v) ? p.stock : Math.max(0, v);
+    const dateVal = document.getElementById('sm-date').value;
+    if (dateVal) p.lastBought = new Date(dateVal).toISOString();
     save(); renderAll();
   }
   closeModal('stock-modal');
@@ -1082,12 +1096,15 @@ function verResumen() {
 
 function confirmarCompra() {
   const needed = products.filter(p => needsBuying(p) || doneIds.has(p.id));
+  const hoy = new Date().toISOString();
   needed.forEach(p => {
     const entry = shopData[p.id];
-    if (entry && entry.qty > 0) {
-      p.stock = p.stock + entry.qty;
-      if (entry.price > 0) p.price = entry.price;
+    const qty = Math.max(1, p.min - p.stock);
+    if (qty > 0) {
+      p.stock = p.stock + qty;
+      p.lastBought = hoy;
     }
+    if (entry && entry.price > 0) p.price = entry.price;
   });
   // Limpiar lista
   doneIds.clear();
@@ -1233,8 +1250,7 @@ function initFirebase() {
       fbLoaded = true;
       return;
     }
-    // Solo ignorar si fue un write nuestro reciente (menos de 5 segundos)
-    if (data.updatedAt && data.updatedAt === localWriteTs && (Date.now() - localWriteTs) < 5000) {
+    if (data.updatedAt && data.updatedAt === localWriteTs) {
       fbLoaded = true;
       document.getElementById('sdot').style.background = '#16a34a';
       document.getElementById('stext').textContent = 'Sincronizado';
