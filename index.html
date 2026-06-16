@@ -1003,7 +1003,7 @@ function renderShopList() {
           <div class="shop-field">
             <label>Precio $ / ${p.unit}</label>
             <input type="number" inputmode="decimal" value="${entry.price || ''}" placeholder="—"
-              onchange="updateShopField('${p.id}','price',this.value); rerenderShopCard('${p.id}')">
+              onblur="updateShopField('${p.id}','price',this.value)">
           </div>
         </div>
         ${sub > 0 ? `<div class="shop-subtotal">Subtotal: <span>${fmt(sub)}</span></div>` : ''}
