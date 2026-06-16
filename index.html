@@ -797,6 +797,8 @@ function renderStock() {
   const q = (document.getElementById('search')?.value||'').toLowerCase();
   const cont = document.getElementById('stock-list');
   cont.innerHTML = '';
+  // Asegurar que todas las cats estén abiertas
+  Object.keys(CATS).forEach(k => openCats.add(k));
   Object.keys(CATS).forEach(ck => {
     const cat = CATS[ck];
     const items = products.filter(p => p.cat===ck && (!q || p.name.toLowerCase().includes(q))).sort((a,b) => a.name.localeCompare(b.name, 'es'));
