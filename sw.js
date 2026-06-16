@@ -1,4 +1,4 @@
-const CACHE = 'despensa-v5';
+const CACHE = 'despensa-v6';
 const FILES = ['/despensa/', '/despensa/index.html', '/despensa/manifest.json'];
 
 self.addEventListener('install', e => {
@@ -19,6 +19,13 @@ self.addEventListener('activate', e => {
 
 self.addEventListener('fetch', e => {
   e.respondWith(
-    caches.match(e.request).then(cached => cached || fetch(e.request))
+    fetch(e.request)
+      .then(response => {
+        // Guardar copia fresca en caché
+        const clone = response.clone();
+        caches.open(CACHE).then(c => c.put(e.request, clone));
+        return response;
+      })
+      .catch(() => caches.match(e.request))
   );
 });
