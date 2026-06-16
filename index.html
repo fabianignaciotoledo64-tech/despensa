@@ -488,6 +488,12 @@ body {
         </select>
         <button class="btn-add" onclick="addProduct()">Agregar producto</button>
       </div>
+      <div class="form-card" style="margin-top:8px">
+        <label style="margin-bottom:8px;display:block">💾 Respaldo de datos</label>
+        <button class="btn-add" style="background:var(--green);margin-bottom:8px" onclick="exportarBackup()">⬇ Exportar backup</button>
+        <button class="btn-add" style="background:var(--bg2);color:var(--text);border:1px solid var(--border)" onclick="document.getElementById('import-file').click()">⬆ Restaurar backup</button>
+        <input type="file" id="import-file" accept=".json" style="display:none" onchange="importarBackup(this)">
+      </div>
     </div>
   </div>
 </div>
@@ -1270,12 +1276,55 @@ load();
 initFirebase();
 
 // Exponer funciones al scope global (necesario con type="module")
+
+// ─── BACKUP ─────────────────────────────────────────────
+function exportarBackup() {
+  const data = {
+    version: 'despensa-backup-v1',
+    exportedAt: new Date().toISOString(),
+    products: products,
+    doneIds: [...doneIds],
+    shopData: shopData
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'despensa-backup-' + new Date().toISOString().slice(0,10) + '.json';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function importarBackup(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (!data.version || !data.products) { alert('Archivo de backup inválido'); return; }
+      if (!confirm('¿Restaurar backup del ' + data.exportedAt.slice(0,10) + '? Se reemplazarán todos los datos actuales.')) return;
+      products = data.products;
+      doneIds = new Set(data.doneIds || []);
+      shopData = data.shopData || {};
+      save(); saveDone(); saveShopData();
+      renderAll();
+      alert('✓ Backup restaurado correctamente');
+    } catch(err) {
+      alert('Error al leer el archivo: ' + err.message);
+    }
+  };
+  reader.readAsText(file);
+  input.value = '';
+}
+
 Object.assign(window, {
   switchTab, toggleCat, chQty, openStockModal, saveStock,
   openPrice, savePrice, openEditProduct, saveEdit, deleteProduct,
   toggleDone, savePriceShop, verResumen,
   confirmarCompra, limpiarLista, addProduct, installApp,
-  openModal, closeModal, setUser, renderStock, renderShopList
+  openModal, closeModal, setUser, renderStock, renderShopList,
+  exportarBackup, importarBackup
 });
 </script>
 </body>
