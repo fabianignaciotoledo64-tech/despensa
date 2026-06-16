@@ -1003,7 +1003,7 @@ function renderShopList() {
           <div class="shop-field">
             <label>Precio $ / ${p.unit}</label>
             <input type="number" inputmode="decimal" value="${entry.price || ''}" placeholder="—"
-              onblur="updateShopField('${p.id}','price',this.value)">
+              onchange="updateShopField('${p.id}','price',this.value)">
           </div>
         </div>
         ${sub > 0 ? `<div class="shop-subtotal">Subtotal: <span>${fmt(sub)}</span></div>` : ''}
@@ -1256,7 +1256,7 @@ function initFirebase() {
       fbLoaded = true;
       return;
     }
-    if (data.updatedAt && data.updatedAt === localWriteTs) {
+    if (data.updatedAt && (data.updatedAt === localWriteTs || Date.now() - localWriteTs < 3000)) {
       fbLoaded = true;
       document.getElementById('sdot').style.background = '#16a34a';
       document.getElementById('stext').textContent = 'Sincronizado';
