@@ -1268,7 +1268,13 @@ function initFirebase() {
     document.getElementById('sdot').style.background = '#16a34a';
     document.getElementById('stext').textContent = 'Sincronizado';
     fbLoaded = true;
-    renderAll();
+    // No reconstruir la lista si está activa — interrumpe la escritura de precios
+    const listaActiva = document.getElementById('panel-lista')?.classList.contains('active');
+    if (listaActiva) {
+      renderStock(); renderBudget();
+    } else {
+      renderAll();
+    }
   }, (error) => {
     document.getElementById('sdot').style.background = '#dc2626';
     document.getElementById('stext').textContent = 'Sin conexión — datos locales';
