@@ -240,11 +240,12 @@ body {
 
 /* TOTAL PARCIAL EN TIEMPO REAL */
 .running-total {
-  position: fixed; bottom: 0; left: 0; right: 0;
+  position: sticky; bottom: 0; left: 0; right: 0;
   background: var(--bg); padding: 10px 16px 12px;
   border-top: 2px solid var(--border);
   display: flex; justify-content: space-between; align-items: center;
   z-index: 20;
+  margin: 0 -16px;
 }
 .running-total-label { font-size: 12px; color: var(--text2); font-family: 'Helvetica Neue', sans-serif; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; }
 .running-total-amount { font-size: 22px; font-weight: 700; letter-spacing: -0.5px; color: var(--blue); }
@@ -405,7 +406,8 @@ body {
 .install-tip.show { display: block; }
 
 /* VISTA DE LISTA - estado */
-#panel-lista { padding-bottom: 80px; }
+#panel-lista { padding-bottom: 16px; }
+#panel-stock { padding-bottom: 24px; }
 </style>
 </head>
 <body>
@@ -448,10 +450,10 @@ body {
         <input class="search-input" type="search" placeholder="Buscar en lista..." id="search-lista" oninput="renderShopList()">
       </div>
       <div id="shop-list"></div>
-    </div>
-    <div class="running-total" id="running-total-bar" style="display:none">
-      <div class="running-total-label">Total parcial</div>
-      <div class="running-total-amount" id="running-total-val">—</div>
+      <div class="running-total" id="running-total-bar" style="display:none">
+        <div class="running-total-label">Total parcial</div>
+        <div class="running-total-amount" id="running-total-val">—</div>
+      </div>
     </div>
 
     <!-- PRESUPUESTO -->
@@ -785,6 +787,7 @@ function switchTab(t) {
   document.getElementById('panel-'+t).classList.add('active');
   const bar = document.getElementById('running-total-bar');
   if (bar) bar.style.display = t === 'lista' ? 'flex' : 'none';
+  if (bar && t !== 'lista') bar.style.display = 'none';
   if (t==='lista') renderShopList();
   else if (t==='stock') renderStock();
   else if (t==='presup') renderBudget();
