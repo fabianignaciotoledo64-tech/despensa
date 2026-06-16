@@ -926,23 +926,31 @@ function deleteProduct() {
 }
 
 // ─── LISTA DE COMPRAS ───────────────────────────────────
-function getShopEntry(p) {
-  const faltante = Math.max(1, p.min - p.stock);
-  if (!shopData[p.id]) {
-    shopData[p.id] = { qty: faltante, price: p.price || 0 };
-  } else {
-    // Siempre recalcular la cantidad basada en stock actual y mínimo
-    shopData[p.id].qty = faltante;
-    if (!shopData[p.id].price && p.price) shopData[p.id].price = p.price;
-  }
-  return shopData[p.id];
-}
+// shopData solo guarda precio; qty siempre se calcula desde stock
 
-function updateShopField(id, field, value) {
-  if (!shopData[id]) shopData[id] = { qty: 1, price: 0 };
+function getQty(p) { return Math.max(1, p.min - p.stock); }
+function getPrice(p) { return (shopData[p.id] && shopData[p.id].price > 0) ? shopData[p.id].price : (p.price || 0); }
+
+function savePriceShop(id, value) {
   const v = parseFloat(value) || 0;
-  shopData[id][field] = field === 'qty' ? Math.max(0, Math.round(v)) : Math.max(0, v);
+  if (!shopData[id]) shopData[id] = {};
+  shopData[id].price = Math.max(0, v);
   saveShopData();
+  // Actualizar solo el subtotal y total sin reconstruir la lista
+  const p = products.find(x => x.id === id);
+  if (!p) return;
+  const qty = getQty(p);
+  const sub = qty > 0 && v > 0 ? qty * v : 0;
+  const card = document.getElementById('sc-' + id);
+  if (card) {
+    const priceEl = card.querySelector('.shop-price, .shop-price-placeholder');
+    if (priceEl) priceEl.outerHTML = sub > 0 ? `<div class="shop-price">${fmt(sub)}</div>` : '<div class="shop-price-placeholder" style="font-size:11px;color:var(--text3)">—</div>';
+    let subEl = card.querySelector('.shop-subtotal');
+    if (sub > 0) {
+      if (subEl) subEl.innerHTML = `Subtotal: <span>${fmt(sub)}</span>`;
+      else { const s = document.createElement('div'); s.className='shop-subtotal'; s.innerHTML=`Subtotal: <span>${fmt(sub)}</span>`; card.appendChild(s); }
+    } else { if (subEl) subEl.remove(); }
+  }
   updateRunningTotal();
 }
 
@@ -950,10 +958,9 @@ function updateRunningTotal() {
   const needed = products.filter(p => needsBuying(p) || doneIds.has(p.id));
   let total = 0;
   needed.forEach(p => {
-    const entry = shopData[p.id];
-    if (entry && entry.qty > 0 && entry.price > 0) {
-      total += entry.qty * entry.price;
-    }
+    const qty = getQty(p);
+    const price = getPrice(p);
+    if (qty > 0 && price > 0) total += qty * price;
   });
   const el = document.getElementById('running-total-val');
   if (el) el.textContent = total > 0 ? fmt(total) : '—';
@@ -967,11 +974,9 @@ function renderShopList() {
 
   if (!needed.length) {
     cont.innerHTML = `<div class="empty"><div class="empty-icon">✅</div>¡Todo completo!</div>`;
+    updateRunningTotal();
     return;
   }
-
-  // Inicializar shopData para los que no tienen entrada
-  needed.forEach(p => getShopEntry(p));
 
   let html = '';
   const ql = (document.getElementById('search-lista')?.value || '').toLowerCase();
@@ -983,8 +988,9 @@ function renderShopList() {
     html += `<div class="section-sep">${cat.emoji} ${cat.label}</div>`;
     items.forEach(p => {
       const done = doneIds.has(p.id);
-      const entry = shopData[p.id] || { qty: 1, price: p.price || 0 };
-      const sub = entry.qty > 0 && entry.price > 0 ? entry.qty * entry.price : 0;
+      const qty = getQty(p);
+      const price = getPrice(p);
+      const sub = qty > 0 && price > 0 ? qty * price : 0;
       html += `<div class="shop-card" id="sc-${p.id}">
         <div class="shop-card-top">
           <div class="check-circle ${done?'done':''}" onclick="toggleDone('${p.id}')">${done?'✓':''}</div>
@@ -992,18 +998,17 @@ function renderShopList() {
             <div class="shop-name ${done?'done':''}">${p.name}</div>
             <div class="shop-sub">Stock: ${p.stock} ${p.unit} · Mín: ${p.min}</div>
           </div>
-          ${sub > 0 ? `<div class="shop-price">${fmt(sub)}</div>` : '<div style="font-size:11px;color:var(--text3)">—</div>'}
+          ${sub > 0 ? `<div class="shop-price">${fmt(sub)}</div>` : '<div class="shop-price-placeholder" style="font-size:11px;color:var(--text3)">—</div>'}
         </div>
         <div class="shop-fields">
           <div class="shop-field">
             <label>Cantidad</label>
-            <input type="number" inputmode="numeric" value="${entry.qty}" min="0"
-              onchange="updateShopField('${p.id}','qty',this.value); rerenderShopCard('${p.id}')">
+            <input type="number" inputmode="numeric" value="${qty}" readonly style="opacity:.7;background:var(--bg3);">
           </div>
           <div class="shop-field">
             <label>Precio $ / ${p.unit}</label>
-            <input type="number" inputmode="decimal" value="${entry.price || ''}" placeholder="—"
-              onchange="updateShopField('${p.id}','price',this.value)">
+            <input type="number" inputmode="decimal" value="${price || ''}" placeholder="Ingresá precio"
+              onchange="savePriceShop('${p.id}', this.value)">
           </div>
         </div>
         ${sub > 0 ? `<div class="shop-subtotal">Subtotal: <span>${fmt(sub)}</span></div>` : ''}
@@ -1011,7 +1016,6 @@ function renderShopList() {
     });
   });
 
-  // Total parcial sticky + botones
   html += `
     <button class="btn-clear" onclick="verResumen()">Ver resumen y confirmar compra</button>
     <button class="btn-clear-sec" onclick="limpiarLista()">Vaciar lista sin actualizar stock</button>
@@ -1021,32 +1025,9 @@ function renderShopList() {
   updateRunningTotal();
 }
 
-function rerenderShopCard(id) {
-  // Re-renderiza solo el precio y subtotal de una card sin perder el foco
-  const p = products.find(x => x.id === id);
-  if (!p) return;
-  const entry = shopData[id] || { qty: 1, price: 0 };
-  const sub = entry.qty > 0 && entry.price > 0 ? entry.qty * entry.price : 0;
-  const card = document.getElementById('sc-' + id);
-  if (!card) return;
-  // Actualizar precio en el header
-  const priceEl = card.querySelector('.shop-price, [style*="text3"]');
-  if (priceEl) priceEl.outerHTML = sub > 0 ? `<div class="shop-price">${fmt(sub)}</div>` : '<div style="font-size:11px;color:var(--text3)">—</div>';
-  // Actualizar subtotal
-  let subEl = card.querySelector('.shop-subtotal');
-  if (sub > 0) {
-    if (subEl) subEl.innerHTML = `Subtotal: <span>${fmt(sub)}</span>`;
-    else { const s = document.createElement('div'); s.className='shop-subtotal'; s.innerHTML=`Subtotal: <span>${fmt(sub)}</span>`; card.appendChild(s); }
-  } else {
-    if (subEl) subEl.remove();
-  }
-  updateRunningTotal();
-}
-
 function toggleDone(id) {
   doneIds.has(id) ? doneIds.delete(id) : doneIds.add(id);
   saveDone();
-  // Solo actualizar clase del check-circle sin re-renderizar todo
   const card = document.getElementById('sc-' + id);
   if (card) {
     const cc = card.querySelector('.check-circle');
@@ -1064,11 +1045,12 @@ function verResumen() {
   Object.keys(CATS).forEach(k => { bycat[k] = { items: [], total: 0 }; });
 
   needed.forEach(p => {
-    const entry = shopData[p.id] || { qty: 0, price: 0 };
-    const sub = entry.qty > 0 && entry.price > 0 ? entry.qty * entry.price : 0;
+    const qty = getQty(p);
+    const price = getPrice(p);
+    const sub = qty > 0 && price > 0 ? qty * price : 0;
     grand += sub;
     bycat[p.cat].total += sub;
-    bycat[p.cat].items.push({ name: p.name, qty: entry.qty, unit: p.unit, sub });
+    bycat[p.cat].items.push({ name: p.name, qty, unit: p.unit, sub });
   });
 
   let html = `<div class="resumen-card">
@@ -1291,7 +1273,7 @@ initFirebase();
 Object.assign(window, {
   switchTab, toggleCat, chQty, openStockModal, saveStock,
   openPrice, savePrice, openEditProduct, saveEdit, deleteProduct,
-  toggleDone, updateShopField, rerenderShopCard, verResumen,
+  toggleDone, savePriceShop, verResumen,
   confirmarCompra, limpiarLista, addProduct, installApp,
   openModal, closeModal, setUser, renderStock, renderShopList
 });
