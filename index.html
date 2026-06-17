@@ -492,6 +492,11 @@ body {
         <button class="btn-add" style="background:var(--bg2);color:var(--text);border:1px solid var(--border)" onclick="openModal('managecat-modal'); renderManageCats()">🏷️ Gestionar categorías</button>
       </div>
       <div class="form-card" style="margin-top:8px">
+        <label style="margin-bottom:8px;display:block">📈 Historial de precios</label>
+        <button class="btn-add" style="background:var(--bg2);color:var(--text);border:1px solid var(--border)" onclick="initPriceHistory()">🕒 Inicializar con precios actuales</button>
+        <div style="font-size:11px;color:var(--text3);margin-top:6px">Toma el precio que tenga cargado cada producto ahora y lo guarda como punto de partida con fecha de hoy, para poder comparar contra los próximos cambios. No afecta a los productos que ya tienen historial.</div>
+      </div>
+      <div class="form-card" style="margin-top:8px">
         <label style="margin-bottom:8px;display:block">💾 Respaldo de datos</label>
         <button class="btn-add" style="background:var(--green);margin-bottom:8px" onclick="exportarBackup()">⬇ Exportar backup</button>
         <button class="btn-add" style="background:var(--bg2);color:var(--text);border:1px solid var(--border)" onclick="document.getElementById('import-file').click()">⬆ Restaurar backup</button>
@@ -813,6 +818,25 @@ function addPriceHistory(p, price, dateIso) {
   p.priceHistory.push({ date, price });
   // Mantener como máximo los últimos 50 registros
   if (p.priceHistory.length > 50) p.priceHistory = p.priceHistory.slice(-50);
+}
+// Toma el precio actual de cada producto (sin historial todavía) y lo registra como punto de partida con fecha de hoy
+function initPriceHistory() {
+  const hoy = new Date().toISOString();
+  let count = 0;
+  products.forEach(p => {
+    if (p.price > 0 && (!p.priceHistory || p.priceHistory.length === 0)) {
+      p.priceHistory = [{ date: hoy, price: p.price }];
+      count++;
+    }
+  });
+  if (count === 0) {
+    alert('No hay productos con precio cargado sin historial. No se hizo ningún cambio.');
+    return;
+  }
+  save();
+  renderAll();
+  if (document.getElementById('panel-precios')?.classList.contains('active')) renderPriceHistoryTab();
+  alert(`✓ Se inicializó el historial de ${count} producto${count===1?'':'s'} con el precio actual y la fecha de hoy.`);
 }
 
 // ─── STORAGE ────────────────────────────────────────────
@@ -1705,7 +1729,7 @@ Object.assign(window, {
   toggleDone, savePriceShop, verResumen,
   confirmarCompra, limpiarLista, addProduct, installApp,
   openModal, closeModal, setUser, renderStock, renderShopList,
-  exportarBackup, importarBackup, saveNewCat, openHistory,
+  exportarBackup, importarBackup, saveNewCat, openHistory, initPriceHistory,
   removeFromShopList, addToShopList, saveQtyShop, renderAddShopOptions,
   renderManageCats, openEditCat, saveEditCat
 });
