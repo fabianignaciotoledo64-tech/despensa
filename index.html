@@ -464,6 +464,9 @@ body {
 
     <!-- HISTORIAL DE PRECIOS -->
     <div class="panel" id="panel-precios">
+      <div class="search-wrap">
+        <input class="search-input" type="search" placeholder="Buscar producto..." id="search-precios" oninput="renderPriceHistoryTab()">
+      </div>
       <div id="precios-list"></div>
     </div>
 
@@ -1496,10 +1499,14 @@ function renderBudget() {
 // ─── PESTAÑA: HISTORIAL DE PRECIOS ──────────────────────
 function renderPriceHistoryTab() {
   const cont = document.getElementById('precios-list');
-  const withPrice = products.filter(p => p.priceHistory && p.priceHistory.length >= 1);
+  const q = (document.getElementById('search-precios')?.value || '').toLowerCase();
+  const withPrice = products.filter(p => p.priceHistory && p.priceHistory.length >= 1 && (!q || p.name.toLowerCase().includes(q)));
 
   if (!withPrice.length) {
-    cont.innerHTML = `<div class="empty"><div class="empty-icon">📈</div>Todavía no se cargó ningún precio.<br><span style="font-size:12px;opacity:.7">Se registran al editar un precio o confirmar una compra.</span></div>`;
+    const noResults = q && products.some(p => p.priceHistory && p.priceHistory.length >= 1);
+    cont.innerHTML = noResults
+      ? `<div class="empty"><div class="empty-icon">🔍</div>No se encontraron productos con precio cargado.</div>`
+      : `<div class="empty"><div class="empty-icon">📈</div>Todavía no se cargó ningún precio.<br><span style="font-size:12px;opacity:.7">Se registran al editar un precio o confirmar una compra.</span></div>`;
     return;
   }
 
