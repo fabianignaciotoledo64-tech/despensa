@@ -1472,39 +1472,53 @@ function renderBudget() {
 // ─── PESTAÑA: HISTORIAL DE PRECIOS ──────────────────────
 function renderPriceHistoryTab() {
   const cont = document.getElementById('precios-list');
-  const withHistory = products.filter(p => p.priceHistory && p.priceHistory.length >= 2);
+  const withPrice = products.filter(p => p.priceHistory && p.priceHistory.length >= 1);
 
-  if (!withHistory.length) {
-    cont.innerHTML = `<div class="empty"><div class="empty-icon">📈</div>Todavía no hay suficientes cambios de precio registrados.<br><span style="font-size:12px;opacity:.7">Se registran al editar un precio o confirmar una compra.</span></div>`;
+  if (!withPrice.length) {
+    cont.innerHTML = `<div class="empty"><div class="empty-icon">📈</div>Todavía no se cargó ningún precio.<br><span style="font-size:12px;opacity:.7">Se registran al editar un precio o confirmar una compra.</span></div>`;
     return;
   }
 
-  const rows = withHistory.map(p => {
+  const rows = withPrice.map(p => {
     const hist = [...p.priceHistory].sort((a,b) => new Date(a.date) - new Date(b.date));
     const first = hist[0], last = hist[hist.length - 1];
-    const diff = last.price - first.price;
-    const pct = first.price ? Math.round((diff / first.price) * 100) : 0;
-    return { p, first, last, diff, pct };
+    const hasChange = hist.length >= 2;
+    const diff = hasChange ? last.price - first.price : 0;
+    const pct = hasChange ? Math.round((diff / first.price) * 100) : null;
+    return { p, first, last, diff, pct, hasChange };
   });
 
-  // Ordenar por % de aumento descendente (los que más subieron primero)
-  rows.sort((a,b) => b.pct - a.pct);
+  // Primero los que tienen variación (mayor aumento primero), después los que solo tienen un precio cargado (alfabético)
+  rows.sort((a, b) => {
+    if (a.hasChange && b.hasChange) return b.pct - a.pct;
+    if (a.hasChange !== b.hasChange) return a.hasChange ? -1 : 1;
+    return a.p.name.localeCompare(b.p.name, 'es');
+  });
 
-  let html = `<div class="section-sep">📈 Ordenado por mayor aumento</div>`;
-  html += rows.map(r => {
+  let sepShown = { change: false, noChange: false };
+  let html = rows.map(r => {
     const cat = CATS[r.p.cat] || { emoji:'📦', label:'' };
-    const color = r.diff > 0 ? 'var(--red)' : (r.diff < 0 ? 'var(--green)' : 'var(--text3)');
-    const arrow = r.diff > 0 ? '▲' : (r.diff < 0 ? '▼' : '=');
-    const pctTxt = r.first.price ? `${arrow} ${Math.abs(r.pct)}%` : '—';
-    return `<div class="shop-card" onclick="openHistory('${r.p.id}')" style="cursor:pointer">
+    let sep = '';
+    if (r.hasChange && !sepShown.change) { sep = `<div class="section-sep">📈 Con variación de precio</div>`; sepShown.change = true; }
+    if (!r.hasChange && !sepShown.noChange) { sep = `<div class="section-sep">🆕 Precio cargado, sin variación aún</div>`; sepShown.noChange = true; }
+
+    const color = !r.hasChange ? 'var(--text3)' : (r.diff > 0 ? 'var(--red)' : (r.diff < 0 ? 'var(--green)' : 'var(--text3)'));
+    const arrow = !r.hasChange ? '' : (r.diff > 0 ? '▲' : (r.diff < 0 ? '▼' : '='));
+    const pctTxt = r.hasChange ? `${arrow} ${Math.abs(r.pct)}%` : '—';
+    const priceLine = r.hasChange ? `${fmt(r.first.price)} → ${fmt(r.last.price)}` : fmt(r.last.price);
+    const subInfo = r.hasChange
+      ? `${fmtDate(r.first.date)} → ${fmtDate(r.last.date)} · ${r.p.priceHistory.length} registros`
+      : `Cargado el ${fmtDate(r.last.date)}`;
+
+    return `${sep}<div class="shop-card" onclick="openHistory('${r.p.id}')" style="cursor:pointer">
       <div class="shop-card-top">
         <div class="shop-info">
           <div class="shop-name">${cat.emoji} ${r.p.name}</div>
-          <div class="shop-sub">${fmtDate(r.first.date)} → ${fmtDate(r.last.date)} · ${r.p.priceHistory.length} registros</div>
+          <div class="shop-sub">${subInfo}</div>
         </div>
         <div style="text-align:right">
           <div style="font-weight:700;color:${color};font-size:13px;font-family:'Helvetica Neue',sans-serif">${pctTxt}</div>
-          <div style="font-size:11px;color:var(--text3);font-family:'Helvetica Neue',sans-serif">${fmt(r.first.price)} → ${fmt(r.last.price)}</div>
+          <div style="font-size:11px;color:var(--text3);font-family:'Helvetica Neue',sans-serif">${priceLine}</div>
         </div>
       </div>
     </div>`;
