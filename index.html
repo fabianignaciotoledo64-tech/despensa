@@ -429,10 +429,11 @@ body {
   </div>
 
   <div class="tabs">
-    <button class="tab active" onclick="switchTab('stock')">📦 Stock</button>
-    <button class="tab" onclick="switchTab('lista')">📋 Lista</button>
-    <button class="tab" onclick="switchTab('presup')">💰 Presup.</button>
-    <button class="tab" onclick="switchTab('add')">＋ Agregar</button>
+    <button class="tab active" data-tab="stock" onclick="switchTab('stock')">📦 Stock</button>
+    <button class="tab" data-tab="lista" onclick="switchTab('lista')">📋 Lista</button>
+    <button class="tab" data-tab="presup" onclick="switchTab('presup')">💰 Presup.</button>
+    <button class="tab" data-tab="precios" onclick="switchTab('precios')">📈 Precios</button>
+    <button class="tab" data-tab="add" onclick="switchTab('add')">＋ Agregar</button>
   </div>
 
   <div class="panels">
@@ -461,20 +462,19 @@ body {
       <div id="budget-list"></div>
     </div>
 
+    <!-- HISTORIAL DE PRECIOS -->
+    <div class="panel" id="panel-precios">
+      <div id="precios-list"></div>
+    </div>
+
     <!-- AGREGAR -->
     <div class="panel" id="panel-add">
       <div class="form-card">
         <label>Nombre</label>
         <input type="text" id="fn" placeholder="Ej: Leche entera">
         <label>Categoría</label>
-        <select id="fc">
-          <option value="supermercado">🏪 Supermercado</option>
-          <option value="carniceria">🥩 Carnicería</option>
-          <option value="verduleria">🥦 Verdulería</option>
-          <option value="fiambreria">🧀 Fiambrería</option>
-          <option value="limpieza">🧹 Limpieza e higiene</option>
-          <option value="congelados">🧊 Congelados</option>
-        </select>
+        <select id="fc"></select>
+        <button type="button" onclick="openModal('newcat-modal')" style="background:none;border:none;color:var(--blue);font-size:12px;font-family:'Helvetica Neue',sans-serif;font-weight:600;cursor:pointer;padding:0 0 12px;display:block;">+ Nueva categoría</button>
         <div class="form-grid">
           <div><label>Stock</label><input type="number" id="fs" placeholder="0" min="0"></div>
           <div><label>Mínimo</label><input type="number" id="fm" placeholder="1" min="0"></div>
@@ -487,6 +487,9 @@ body {
           <option>maple</option><option>docena</option>
         </select>
         <button class="btn-add" onclick="addProduct()">Agregar producto</button>
+      </div>
+      <div class="form-card" style="margin-top:8px">
+        <button class="btn-add" style="background:var(--bg2);color:var(--text);border:1px solid var(--border)" onclick="openModal('managecat-modal'); renderManageCats()">🏷️ Gestionar categorías</button>
       </div>
       <div class="form-card" style="margin-top:8px">
         <label style="margin-bottom:8px;display:block">💾 Respaldo de datos</label>
@@ -536,14 +539,7 @@ body {
     <label class="modal-label">Nombre</label>
     <input class="modal-input-sm" type="text" id="em-name" placeholder="Nombre del producto">
     <label class="modal-label">Categoría</label>
-    <select class="modal-select" id="em-cat">
-      <option value="supermercado">🏪 Supermercado</option>
-      <option value="carniceria">🥩 Carnicería</option>
-      <option value="verduleria">🥦 Verdulería</option>
-      <option value="fiambreria">🧀 Fiambrería</option>
-      <option value="limpieza">🧹 Limpieza e higiene</option>
-      <option value="congelados">🧊 Congelados</option>
-    </select>
+    <select class="modal-select" id="em-cat"></select>
     <div class="modal-grid">
       <div>
         <label class="modal-label">Mínimo</label>
@@ -560,6 +556,67 @@ body {
     </div>
     <button class="btn-save" onclick="saveEdit()">Guardar cambios</button>
     <button class="btn-delete" onclick="deleteProduct()">🗑 Eliminar producto</button>
+  </div>
+</div>
+
+<!-- MODAL: NUEVA CATEGORÍA -->
+<div class="modal-overlay" id="newcat-modal">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <button class="modal-close" onclick="closeModal('newcat-modal')">×</button>
+    <div class="modal-title">Nueva categoría</div>
+    <label class="modal-label">Nombre</label>
+    <input class="modal-input-sm" type="text" id="nc-name" placeholder="Ej: Bebidas, Mascotas...">
+    <label class="modal-label">Emoji</label>
+    <input class="modal-input-sm" type="text" id="nc-emoji" placeholder="Ej: 🐶" maxlength="4">
+    <button class="btn-save" onclick="saveNewCat()">Crear categoría</button>
+  </div>
+</div>
+
+<!-- MODAL: GESTIONAR CATEGORÍAS -->
+<div class="modal-overlay" id="managecat-modal">
+  <div class="modal-sheet" style="max-height:80vh;overflow-y:auto">
+    <div class="modal-handle"></div>
+    <button class="modal-close" onclick="closeModal('managecat-modal')">×</button>
+    <div class="modal-title">Gestionar categorías</div>
+    <div id="managecat-list"></div>
+    <button class="btn-clear-sec" style="margin-top:8px;margin-bottom:0" onclick="closeModal('managecat-modal'); openModal('newcat-modal')">+ Nueva categoría</button>
+  </div>
+</div>
+
+<!-- MODAL: EDITAR CATEGORÍA -->
+<div class="modal-overlay" id="editcat-modal">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <button class="modal-close" onclick="closeModal('editcat-modal')">×</button>
+    <div class="modal-title">Editar categoría</div>
+    <label class="modal-label">Nombre</label>
+    <input class="modal-input-sm" type="text" id="ec-name" placeholder="Ej: Bebidas, Mascotas...">
+    <label class="modal-label">Emoji</label>
+    <input class="modal-input-sm" type="text" id="ec-emoji" placeholder="Ej: 🐶" maxlength="4">
+    <button class="btn-save" onclick="saveEditCat()">Guardar cambios</button>
+  </div>
+</div>
+
+<!-- MODAL: HISTORIAL DE PRECIOS -->
+<div class="modal-overlay" id="history-modal">
+  <div class="modal-sheet" style="max-height:80vh;overflow-y:auto">
+    <div class="modal-handle"></div>
+    <button class="modal-close" onclick="closeModal('history-modal')">×</button>
+    <div class="modal-title" id="hm-title">Historial de precios</div>
+    <canvas id="hm-canvas" width="400" height="160" style="width:100%;height:140px;margin-bottom:12px;"></canvas>
+    <div id="hm-list"></div>
+  </div>
+</div>
+
+<!-- MODAL: AGREGAR PRODUCTO A LA LISTA -->
+<div class="modal-overlay" id="addshop-modal">
+  <div class="modal-sheet" style="max-height:80vh;overflow-y:auto">
+    <div class="modal-handle"></div>
+    <button class="modal-close" onclick="closeModal('addshop-modal')">×</button>
+    <div class="modal-title">Agregar a la lista</div>
+    <input class="modal-input-sm" type="search" id="addshop-search" placeholder="Buscar producto..." oninput="renderAddShopOptions()">
+    <div id="addshop-options"></div>
   </div>
 </div>
 
@@ -594,8 +651,9 @@ const STORE_KEY = 'despensa-v4';
 const DONE_KEY  = 'despensa-v4-done';
 const USER_KEY  = 'despensa-v4-user';
 const SHOP_KEY  = 'despensa-v4-shop'; // cantidades y precios de la lista de compras
+const CATS_KEY  = 'despensa-v4-cats';
 
-const CATS = {
+const DEFAULT_CATS = {
   supermercado: { label:'Supermercado',       emoji:'🏪', color:'#2563eb' },
   carniceria:   { label:'Carnicería',         emoji:'🥩', color:'#ea580c' },
   verduleria:   { label:'Verdulería',         emoji:'🥦', color:'#16a34a' },
@@ -603,6 +661,7 @@ const CATS = {
   limpieza:     { label:'Limpieza e higiene', emoji:'🧹', color:'#db2777' },
   congelados:   { label:'Congelados',         emoji:'🧊', color:'#0891b2' },
 };
+let CATS = JSON.parse(JSON.stringify(DEFAULT_CATS));
 
 const DEFAULTS = [
   // SUPERMERCADO
@@ -724,8 +783,14 @@ const DEFAULTS = [
 let products = [], doneIds = new Set(), currentUser = 'yo';
 let openCats = new Set(Object.keys(CATS));
 let editPriceId = null, editProductId = null, editStockId = null;
-// shopData: { [productId]: { qty: number, price: number } }
+// shopData: { [productId]: { qty?: number, price?: number } } — qty sobreescribe el cálculo automático
 let shopData = {};
+// excludedIds: productos que el usuario sacó manualmente de la lista aunque les falte stock
+let excludedIds = new Set();
+// manualIds: productos que el usuario agregó manualmente a la lista aunque no les falte stock
+let manualIds = new Set();
+const EXCLUDED_KEY = 'despensa-v4-excluded';
+const MANUAL_KEY   = 'despensa-v4-manual';
 
 const fmt = n => n ? '$\u202f' + Math.round(n).toLocaleString('es-AR') : '—';
 const needsBuying = p => p.stock < p.min;
@@ -733,6 +798,21 @@ function fmtDate(iso) {
   if (!iso) return '';
   const d = new Date(iso);
   return d.toLocaleDateString('es-AR', { day:'numeric', month:'short' });
+}
+function fmtDateLong(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  return d.toLocaleDateString('es-AR', { day:'numeric', month:'short', year:'numeric' });
+}
+function addPriceHistory(p, price, dateIso) {
+  if (!p.priceHistory) p.priceHistory = [];
+  const date = dateIso || new Date().toISOString();
+  // Evitar duplicados consecutivos con el mismo precio
+  const last = p.priceHistory[p.priceHistory.length - 1];
+  if (last && last.price === price) return;
+  p.priceHistory.push({ date, price });
+  // Mantener como máximo los últimos 50 registros
+  if (p.priceHistory.length > 50) p.priceHistory = p.priceHistory.slice(-50);
 }
 
 // ─── STORAGE ────────────────────────────────────────────
@@ -748,6 +828,18 @@ function saveShopData() {
   try { localStorage.setItem(SHOP_KEY, JSON.stringify(shopData)); } catch(e){}
   if (typeof fbLoaded !== 'undefined' && fbLoaded) syncToFirebase();
 }
+function saveCats() {
+  try { localStorage.setItem(CATS_KEY, JSON.stringify(CATS)); } catch(e){}
+  if (typeof fbLoaded !== 'undefined' && fbLoaded) syncToFirebase();
+}
+function saveExcluded() {
+  try { localStorage.setItem(EXCLUDED_KEY, JSON.stringify([...excludedIds])); } catch(e){}
+  if (typeof fbLoaded !== 'undefined' && fbLoaded) syncToFirebase();
+}
+function saveManual() {
+  try { localStorage.setItem(MANUAL_KEY, JSON.stringify([...manualIds])); } catch(e){}
+  if (typeof fbLoaded !== 'undefined' && fbLoaded) syncToFirebase();
+}
 function load() {
   try {
     const r = localStorage.getItem(STORE_KEY);
@@ -759,12 +851,88 @@ function load() {
     if (u) currentUser = u;
     const s = localStorage.getItem(SHOP_KEY);
     if (s) shopData = JSON.parse(s);
+    const c = localStorage.getItem(CATS_KEY);
+    if (c) CATS = JSON.parse(c);
+    const ex = localStorage.getItem(EXCLUDED_KEY);
+    if (ex) excludedIds = new Set(JSON.parse(ex));
+    const ma = localStorage.getItem(MANUAL_KEY);
+    if (ma) manualIds = new Set(JSON.parse(ma));
   } catch(e) {
     products = JSON.parse(JSON.stringify(DEFAULTS));
   }
   document.getElementById('sdot').style.background = '#16a34a';
   document.getElementById('stext').textContent = 'Datos guardados en este dispositivo';
-  applyUser(); renderAll();
+  applyUser(); renderAll(); renderCatSelects();
+}
+
+// ─── CATEGORÍAS ─────────────────────────────────────────
+function catOptionsHtml() {
+  return Object.keys(CATS).map(k => `<option value="${k}">${CATS[k].emoji} ${CATS[k].label}</option>`).join('');
+}
+function renderCatSelects() {
+  const opts = catOptionsHtml();
+  const fc = document.getElementById('fc');
+  const emcat = document.getElementById('em-cat');
+  if (fc) { const cur = fc.value; fc.innerHTML = opts; if (cur && CATS[cur]) fc.value = cur; }
+  if (emcat) { const cur = emcat.value; emcat.innerHTML = opts; if (cur && CATS[cur]) emcat.value = cur; }
+}
+function randomCatColor() {
+  const palette = ['#2563eb','#ea580c','#16a34a','#d97706','#db2777','#0891b2','#7c3aed','#dc2626','#0d9488','#ca8a04'];
+  return palette[Math.floor(Math.random()*palette.length)];
+}
+function saveNewCat() {
+  const name = document.getElementById('nc-name').value.trim();
+  const emoji = document.getElementById('nc-emoji').value.trim() || '📦';
+  if (!name) { alert('Ingresá un nombre para la categoría'); return; }
+  const key = 'cat_' + name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'_').replace(/^_+|_+$/g,'') + '_' + Date.now().toString(36);
+  CATS[key] = { label: name, emoji: emoji, color: randomCatColor() };
+  saveCats();
+  renderCatSelects();
+  openCats.add(key);
+  document.getElementById('nc-name').value = '';
+  document.getElementById('nc-emoji').value = '';
+  closeModal('newcat-modal');
+  const fc = document.getElementById('fc');
+  if (fc) fc.value = key;
+  renderAll();
+}
+
+// ─── GESTIONAR / EDITAR CATEGORÍAS ──────────────────────
+let editCatKey = null;
+function renderManageCats() {
+  const cont = document.getElementById('managecat-list');
+  if (!cont) return;
+  const keys = Object.keys(CATS).sort((a,b) => CATS[a].label.localeCompare(CATS[b].label, 'es'));
+  cont.innerHTML = keys.map(k => {
+    const cat = CATS[k];
+    const count = products.filter(p => p.cat === k).length;
+    return `<div class="user-opt" onclick="openEditCat('${k}')" style="cursor:pointer">
+      <div style="font-size:20px;width:32px;text-align:center">${cat.emoji}</div>
+      <div style="flex:1"><div class="user-opt-name">${cat.label}</div><div class="user-opt-sub">${count} producto${count===1?'':'s'}</div></div>
+      <div style="color:var(--text3);font-size:14px">✏️</div>
+    </div>`;
+  }).join('');
+}
+function openEditCat(key) {
+  if (!CATS[key]) return;
+  editCatKey = key;
+  document.getElementById('ec-name').value = CATS[key].label;
+  document.getElementById('ec-emoji').value = CATS[key].emoji;
+  closeModal('managecat-modal');
+  openModal('editcat-modal');
+  setTimeout(()=>document.getElementById('ec-name').focus(),200);
+}
+function saveEditCat() {
+  if (!editCatKey || !CATS[editCatKey]) { closeModal('editcat-modal'); return; }
+  const name = document.getElementById('ec-name').value.trim();
+  const emoji = document.getElementById('ec-emoji').value.trim();
+  if (!name) { alert('Ingresá un nombre para la categoría'); return; }
+  CATS[editCatKey].label = name;
+  if (emoji) CATS[editCatKey].emoji = emoji;
+  saveCats();
+  renderCatSelects();
+  renderAll();
+  closeModal('editcat-modal');
 }
 
 // ─── USUARIO ────────────────────────────────────────────
@@ -787,16 +955,15 @@ function closeModal(id) { document.getElementById(id).classList.remove('open'); 
 
 // ─── TABS ───────────────────────────────────────────────
 function switchTab(t) {
-  const names = ['stock','lista','presup','add'];
-  document.querySelectorAll('.tab').forEach((el,i) => el.classList.toggle('active', names[i]===t));
+  document.querySelectorAll('.tab').forEach(el => el.classList.toggle('active', el.dataset.tab===t));
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   document.getElementById('panel-'+t).classList.add('active');
   const bar = document.getElementById('running-total-bar');
   if (bar) bar.style.display = t === 'lista' ? 'flex' : 'none';
-  if (bar && t !== 'lista') bar.style.display = 'none';
   if (t==='lista') renderShopList();
   else if (t==='stock') renderStock();
   else if (t==='presup') renderBudget();
+  else if (t==='precios') renderPriceHistoryTab();
 }
 
 function renderAll() { renderStock(); renderShopList(); renderBudget(); }
@@ -832,6 +999,7 @@ function renderStock() {
               <div class="prod-meta">
                 <span>${p.unit}</span>
                 ${p.price?`<span class="price-lbl" onclick="openPrice('${p.id}')" style="cursor:pointer">${fmt(p.price)}/${p.unit}</span>`:`<span style="font-style:italic;cursor:pointer;color:var(--text3)" onclick="openPrice('${p.id}')">+ precio</span>`}
+                ${p.priceHistory && p.priceHistory.length>1?`<span onclick="openHistory('${p.id}')" style="cursor:pointer" title="Historial de precios">📈</span>`:''}
                 ${p.lastBought?`<span style="color:var(--text3)">🛒 ${fmtDate(p.lastBought)}</span>`:''}
                 ${low?`<span class="low-warn">⚠ mín:${p.min}</span>`:''}
               </div>
@@ -897,8 +1065,84 @@ function openPrice(id) {
 }
 function savePrice() {
   const p = products.find(x=>x.id===editPriceId);
-  if (p) { p.price = parseFloat(document.getElementById('pm-input').value)||0; save(); renderAll(); }
+  if (p) {
+    const newPrice = parseFloat(document.getElementById('pm-input').value)||0;
+    if (newPrice > 0 && newPrice !== p.price) addPriceHistory(p, newPrice);
+    p.price = newPrice;
+    save(); renderAll();
+  }
   closeModal('price-modal');
+}
+
+// ─── HISTORIAL DE PRECIOS ───────────────────────────────
+function openHistory(id) {
+  const p = products.find(x=>x.id===id);
+  if (!p || !p.priceHistory || !p.priceHistory.length) return;
+  document.getElementById('hm-title').textContent = p.name + ' — historial de precios';
+
+  const hist = [...p.priceHistory].sort((a,b) => new Date(a.date) - new Date(b.date));
+
+  // Lista (más reciente primero), mostrando variación entre puntos consecutivos
+  let listHtml = '';
+  for (let i = hist.length - 1; i >= 0; i--) {
+    const cur = hist[i];
+    const prev = hist[i-1];
+    let diffHtml = '';
+    if (prev) {
+      const diff = cur.price - prev.price;
+      const pct = prev.price ? Math.round((diff/prev.price)*100) : 0;
+      if (diff > 0) diffHtml = `<span style="color:var(--red);font-size:11px">▲ ${pct}%</span>`;
+      else if (diff < 0) diffHtml = `<span style="color:var(--green);font-size:11px">▼ ${Math.abs(pct)}%</span>`;
+      else diffHtml = `<span style="color:var(--text3);font-size:11px">=</span>`;
+    }
+    listHtml += `<div class="resumen-row">
+      <span class="resumen-row-label">${fmtDateLong(cur.date)}</span>
+      <span style="display:flex;align-items:center;gap:8px">${diffHtml}<span class="resumen-row-val">${fmt(cur.price)}</span></span>
+    </div>`;
+  }
+  document.getElementById('hm-list').innerHTML = listHtml;
+
+  // Gráfico simple en canvas
+  const canvas = document.getElementById('hm-canvas');
+  const ctx = canvas.getContext && canvas.getContext('2d');
+  if (ctx) {
+  const W = canvas.width, H = canvas.height, PAD = 24;
+  ctx.clearRect(0,0,W,H);
+  const prices = hist.map(h => h.price);
+  const min = Math.min(...prices), max = Math.max(...prices);
+  const range = max - min || 1;
+  const stepX = hist.length > 1 ? (W - PAD*2) / (hist.length - 1) : 0;
+  const isDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  ctx.strokeStyle = isDark ? '#3f3f46' : '#d8d6d0';
+  ctx.lineWidth = 1;
+  for (let i=0;i<=3;i++){
+    const y = PAD + (H-PAD*2) * i/3;
+    ctx.beginPath(); ctx.moveTo(PAD, y); ctx.lineTo(W-PAD, y); ctx.stroke();
+  }
+  ctx.strokeStyle = '#2563eb';
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  hist.forEach((h,i) => {
+    const x = PAD + stepX*i;
+    const y = H - PAD - ((h.price - min)/range) * (H-PAD*2);
+    if (i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+  });
+  ctx.stroke();
+  ctx.fillStyle = '#2563eb';
+  hist.forEach((h,i) => {
+    const x = PAD + stepX*i;
+    const y = H - PAD - ((h.price - min)/range) * (H-PAD*2);
+    ctx.beginPath(); ctx.arc(x,y,3,0,Math.PI*2); ctx.fill();
+  });
+  ctx.fillStyle = isDark ? '#a1a1aa' : '#666660';
+  ctx.font = '10px Helvetica Neue, sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText(fmt(min), 2, H-PAD+4);
+  ctx.textAlign = 'right';
+  ctx.fillText(fmt(max), W-2, PAD-4);
+  }
+
+  openModal('history-modal');
 }
 
 // ─── EDITAR / ELIMINAR PRODUCTO ─────────────────────────
@@ -934,8 +1178,63 @@ function deleteProduct() {
 // ─── LISTA DE COMPRAS ───────────────────────────────────
 // shopData solo guarda precio; qty siempre se calcula desde stock
 
-function getQty(p) { return Math.max(1, p.min - p.stock); }
+function getQty(p) {
+  const auto = Math.max(1, p.min - p.stock);
+  const override = shopData[p.id] && shopData[p.id].qty;
+  return (override !== undefined && override !== null && override > 0) ? override : auto;
+}
 function getPrice(p) { return (shopData[p.id] && shopData[p.id].price > 0) ? shopData[p.id].price : (p.price || 0); }
+// Lista de compras: automáticos (stock<min) + manuales agregados, menos los excluidos manualmente
+function getShopList() {
+  return products.filter(p =>
+    !excludedIds.has(p.id) &&
+    (needsBuying(p) || doneIds.has(p.id) || manualIds.has(p.id))
+  );
+}
+function removeFromShopList(id) {
+  if (!confirm('¿Sacar este producto de la lista?')) return;
+  excludedIds.add(id);
+  manualIds.delete(id);
+  doneIds.delete(id);
+  saveExcluded(); saveManual(); saveDone();
+  renderShopList();
+}
+function addToShopList(id) {
+  excludedIds.delete(id);
+  manualIds.add(id);
+  saveExcluded(); saveManual();
+  closeModal('addshop-modal');
+  renderShopList();
+}
+function renderAddShopOptions() {
+  const cont = document.getElementById('addshop-options');
+  if (!cont) return;
+  const inShop = new Set(getShopList().map(p => p.id));
+  const q = (document.getElementById('addshop-search')?.value || '').toLowerCase();
+  const available = products
+    .filter(p => !inShop.has(p.id) && (!q || p.name.toLowerCase().includes(q)))
+    .sort((a,b) => a.name.localeCompare(b.name, 'es'));
+
+  if (!available.length) {
+    cont.innerHTML = `<div class="empty" style="padding:24px 16px"><div class="empty-icon">🔍</div>No hay productos para agregar</div>`;
+    return;
+  }
+
+  cont.innerHTML = available.map(p => {
+    const cat = CATS[p.cat] || { emoji:'📦' };
+    return `<div class="user-opt" onclick="addToShopList('${p.id}')">
+      <div style="font-size:18px;width:32px;text-align:center">${cat.emoji}</div>
+      <div><div class="user-opt-name" style="font-size:14px">${p.name}</div><div class="user-opt-sub">Stock: ${p.stock} ${p.unit}</div></div>
+    </div>`;
+  }).join('');
+}
+function saveQtyShop(id, value) {
+  const v = parseInt(value);
+  if (!shopData[id]) shopData[id] = {};
+  shopData[id].qty = (isNaN(v) || v <= 0) ? null : v;
+  saveShopData();
+  updateRunningTotal();
+}
 
 function savePriceShop(id, value) {
   const v = parseFloat(value) || 0;
@@ -961,7 +1260,7 @@ function savePriceShop(id, value) {
 }
 
 function updateRunningTotal() {
-  const needed = products.filter(p => needsBuying(p) || doneIds.has(p.id));
+  const needed = getShopList();
   let total = 0;
   needed.forEach(p => {
     const qty = getQty(p);
@@ -976,10 +1275,11 @@ function updateRunningTotal() {
 
 function renderShopList() {
   const cont = document.getElementById('shop-list');
-  const needed = products.filter(p => needsBuying(p) || doneIds.has(p.id));
+  const needed = getShopList();
 
   if (!needed.length) {
-    cont.innerHTML = `<div class="empty"><div class="empty-icon">✅</div>¡Todo completo!</div>`;
+    cont.innerHTML = `<div class="empty"><div class="empty-icon">✅</div>¡Todo completo!</div>
+      <button class="btn-clear-sec" onclick="openModal('addshop-modal'); renderAddShopOptions()">+ Agregar producto a la lista</button>`;
     updateRunningTotal();
     return;
   }
@@ -997,19 +1297,22 @@ function renderShopList() {
       const qty = getQty(p);
       const price = getPrice(p);
       const sub = qty > 0 && price > 0 ? qty * price : 0;
+      const isManual = manualIds.has(p.id) && !needsBuying(p);
       html += `<div class="shop-card" id="sc-${p.id}">
         <div class="shop-card-top">
           <div class="check-circle ${done?'done':''}" onclick="toggleDone('${p.id}')">${done?'✓':''}</div>
           <div class="shop-info">
-            <div class="shop-name ${done?'done':''}">${p.name}</div>
+            <div class="shop-name ${done?'done':''}">${p.name}${isManual?' <span style="font-size:10px;color:var(--text3);font-style:italic">(agregado)</span>':''}</div>
             <div class="shop-sub">Stock: ${p.stock} ${p.unit} · Mín: ${p.min}</div>
           </div>
           ${sub > 0 ? `<div class="shop-price">${fmt(sub)}</div>` : '<div class="shop-price-placeholder" style="font-size:11px;color:var(--text3)">—</div>'}
+          <button class="edit-btn" title="Quitar de la lista" onclick="removeFromShopList('${p.id}')" style="color:var(--red);border-color:var(--red)">✕</button>
         </div>
         <div class="shop-fields">
           <div class="shop-field">
             <label>Cantidad</label>
-            <input type="number" inputmode="numeric" value="${qty}" readonly style="opacity:.7;background:var(--bg3);">
+            <input type="number" inputmode="numeric" value="${qty}" min="1"
+              onchange="saveQtyShop('${p.id}', this.value)">
           </div>
           <div class="shop-field">
             <label>Precio $ / ${p.unit}</label>
@@ -1023,6 +1326,7 @@ function renderShopList() {
   });
 
   html += `
+    <button class="btn-clear-sec" onclick="openModal('addshop-modal'); renderAddShopOptions()" style="margin-top:0;margin-bottom:8px">+ Agregar producto a la lista</button>
     <button class="btn-clear" onclick="verResumen()">Ver resumen y confirmar compra</button>
     <button class="btn-clear-sec" onclick="limpiarLista()">Vaciar lista sin actualizar stock</button>
   `;
@@ -1045,7 +1349,7 @@ function toggleDone(id) {
 }
 
 function verResumen() {
-  const needed = products.filter(p => needsBuying(p) || doneIds.has(p.id));
+  const needed = getShopList();
   let grand = 0;
   const bycat = {};
   Object.keys(CATS).forEach(k => { bycat[k] = { items: [], total: 0 }; });
@@ -1088,21 +1392,26 @@ function verResumen() {
 }
 
 function confirmarCompra() {
-  const needed = products.filter(p => needsBuying(p) || doneIds.has(p.id));
+  const needed = getShopList();
   const hoy = new Date().toISOString();
   needed.forEach(p => {
     const entry = shopData[p.id];
-    const qty = Math.max(1, p.min - p.stock);
+    const qty = getQty(p);
     if (qty > 0) {
       p.stock = p.stock + qty;
       p.lastBought = hoy;
     }
-    if (entry && entry.price > 0) p.price = entry.price;
+    if (entry && entry.price > 0) {
+      if (entry.price !== p.price) addPriceHistory(p, entry.price, hoy);
+      p.price = entry.price;
+    }
   });
   // Limpiar lista
   doneIds.clear();
   shopData = {};
-  save(); saveDone(); saveShopData();
+  manualIds.clear();
+  excludedIds.clear();
+  save(); saveDone(); saveShopData(); saveManual(); saveExcluded();
   closeModal('resumen-modal');
   renderAll();
   switchTab('stock');
@@ -1112,7 +1421,9 @@ function limpiarLista() {
   if (!confirm('¿Vaciar la lista sin actualizar el stock?')) return;
   doneIds.clear();
   shopData = {};
-  saveDone(); saveShopData();
+  manualIds.clear();
+  excludedIds.clear();
+  saveDone(); saveShopData(); saveManual(); saveExcluded();
   renderShopList();
 }
 
@@ -1155,6 +1466,50 @@ function renderBudget() {
     </div>`;
   });
   if (!needed.length) html += `<div class="empty"><div class="empty-icon">✅</div>No falta nada</div>`;
+  cont.innerHTML = html;
+}
+
+// ─── PESTAÑA: HISTORIAL DE PRECIOS ──────────────────────
+function renderPriceHistoryTab() {
+  const cont = document.getElementById('precios-list');
+  const withHistory = products.filter(p => p.priceHistory && p.priceHistory.length >= 2);
+
+  if (!withHistory.length) {
+    cont.innerHTML = `<div class="empty"><div class="empty-icon">📈</div>Todavía no hay suficientes cambios de precio registrados.<br><span style="font-size:12px;opacity:.7">Se registran al editar un precio o confirmar una compra.</span></div>`;
+    return;
+  }
+
+  const rows = withHistory.map(p => {
+    const hist = [...p.priceHistory].sort((a,b) => new Date(a.date) - new Date(b.date));
+    const first = hist[0], last = hist[hist.length - 1];
+    const diff = last.price - first.price;
+    const pct = first.price ? Math.round((diff / first.price) * 100) : 0;
+    return { p, first, last, diff, pct };
+  });
+
+  // Ordenar por % de aumento descendente (los que más subieron primero)
+  rows.sort((a,b) => b.pct - a.pct);
+
+  let html = `<div class="section-sep">📈 Ordenado por mayor aumento</div>`;
+  html += rows.map(r => {
+    const cat = CATS[r.p.cat] || { emoji:'📦', label:'' };
+    const color = r.diff > 0 ? 'var(--red)' : (r.diff < 0 ? 'var(--green)' : 'var(--text3)');
+    const arrow = r.diff > 0 ? '▲' : (r.diff < 0 ? '▼' : '=');
+    const pctTxt = r.first.price ? `${arrow} ${Math.abs(r.pct)}%` : '—';
+    return `<div class="shop-card" onclick="openHistory('${r.p.id}')" style="cursor:pointer">
+      <div class="shop-card-top">
+        <div class="shop-info">
+          <div class="shop-name">${cat.emoji} ${r.p.name}</div>
+          <div class="shop-sub">${fmtDate(r.first.date)} → ${fmtDate(r.last.date)} · ${r.p.priceHistory.length} registros</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-weight:700;color:${color};font-size:13px;font-family:'Helvetica Neue',sans-serif">${pctTxt}</div>
+          <div style="font-size:11px;color:var(--text3);font-family:'Helvetica Neue',sans-serif">${fmt(r.first.price)} → ${fmt(r.last.price)}</div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
   cont.innerHTML = html;
 }
 
@@ -1222,6 +1577,9 @@ function syncToFirebase() {
         products: products,
         doneIds: [...doneIds],
         shopData: shopData,
+        cats: CATS,
+        manualIds: [...manualIds],
+        excludedIds: [...excludedIds],
         updatedAt: localWriteTs
       });
       document.getElementById('sdot').style.background = '#16a34a';
@@ -1253,6 +1611,9 @@ function initFirebase() {
     if (data.products) { products = data.products; try { localStorage.setItem(STORE_KEY, JSON.stringify(products)); } catch(e){} }
     if (data.doneIds)  { doneIds = new Set(data.doneIds); try { localStorage.setItem(DONE_KEY, JSON.stringify([...doneIds])); } catch(e){} }
     if (data.shopData) { shopData = data.shopData; try { localStorage.setItem(SHOP_KEY, JSON.stringify(shopData)); } catch(e){} }
+    if (data.cats)     { CATS = data.cats; try { localStorage.setItem(CATS_KEY, JSON.stringify(CATS)); } catch(e){} renderCatSelects(); }
+    if (data.manualIds)   { manualIds = new Set(data.manualIds); try { localStorage.setItem(MANUAL_KEY, JSON.stringify([...manualIds])); } catch(e){} }
+    if (data.excludedIds) { excludedIds = new Set(data.excludedIds); try { localStorage.setItem(EXCLUDED_KEY, JSON.stringify([...excludedIds])); } catch(e){} }
     document.getElementById('sdot').style.background = '#16a34a';
     document.getElementById('stext').textContent = 'Sincronizado';
     fbLoaded = true;
@@ -1284,7 +1645,10 @@ function exportarBackup() {
     exportedAt: new Date().toISOString(),
     products: products,
     doneIds: [...doneIds],
-    shopData: shopData
+    shopData: shopData,
+    cats: CATS,
+    manualIds: [...manualIds],
+    excludedIds: [...excludedIds]
   };
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
@@ -1307,8 +1671,11 @@ function importarBackup(input) {
       products = data.products;
       doneIds = new Set(data.doneIds || []);
       shopData = data.shopData || {};
-      save(); saveDone(); saveShopData();
-      renderAll();
+      if (data.cats) CATS = data.cats;
+      manualIds = new Set(data.manualIds || []);
+      excludedIds = new Set(data.excludedIds || []);
+      save(); saveDone(); saveShopData(); saveCats(); saveManual(); saveExcluded();
+      renderAll(); renderCatSelects();
       alert('✓ Backup restaurado correctamente');
     } catch(err) {
       alert('Error al leer el archivo: ' + err.message);
@@ -1324,7 +1691,9 @@ Object.assign(window, {
   toggleDone, savePriceShop, verResumen,
   confirmarCompra, limpiarLista, addProduct, installApp,
   openModal, closeModal, setUser, renderStock, renderShopList,
-  exportarBackup, importarBackup
+  exportarBackup, importarBackup, saveNewCat, openHistory,
+  removeFromShopList, addToShopList, saveQtyShop, renderAddShopOptions,
+  renderManageCats, openEditCat, saveEditCat
 });
 </script>
 </body>
