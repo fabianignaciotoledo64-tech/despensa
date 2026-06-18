@@ -797,8 +797,13 @@ let shopData = {};
 let excludedIds = new Set();
 // manualIds: productos que el usuario agregó manualmente a la lista aunque no les falte stock
 let manualIds = new Set();
+// purchaseHistory: registro de cada compra confirmada — { date, total, itemCount }
+let purchaseHistory = [];
+let openMonths = new Set();
+let monthsInited = false;
 const EXCLUDED_KEY = 'despensa-v4-excluded';
 const MANUAL_KEY   = 'despensa-v4-manual';
+const PURCHASE_KEY = 'despensa-v4-purchases';
 
 const fmt = n => n ? '$\u202f' + Math.round(n).toLocaleString('es-AR') : '—';
 const needsBuying = p => p.stock < p.min;
@@ -867,6 +872,24 @@ function saveManual() {
   try { localStorage.setItem(MANUAL_KEY, JSON.stringify([...manualIds])); } catch(e){}
   if (typeof fbLoaded !== 'undefined' && fbLoaded) syncToFirebase();
 }
+function savePurchaseHistory() {
+  try { localStorage.setItem(PURCHASE_KEY, JSON.stringify(purchaseHistory)); } catch(e){}
+  if (typeof fbLoaded !== 'undefined' && fbLoaded) syncToFirebase();
+}
+// Utilidad de consola: seedPastPurchase("2026-06-16T23:57:27.668Z", 360151, 49)
+// Permite cargar una compra pasada que no quedó registrada (por ejemplo, anteriores a esta función)
+// sin tocar stock, precios ni ningún otro dato. Se guarda y sincroniza igual que el resto.
+function seedPastPurchase(dateIso, total, itemCount) {
+  const t = Math.round(Number(total));
+  if (!dateIso || !(t > 0)) {
+    console.warn('Uso: seedPastPurchase("2026-06-16T23:57:27.668Z", 360151, 49)');
+    return;
+  }
+  purchaseHistory.push({ date: dateIso, total: t, itemCount: itemCount || 0 });
+  savePurchaseHistory();
+  if (document.getElementById('panel-presup')?.classList.contains('active')) renderBudget();
+  console.log('✓ Compra pasada agregada:', dateIso, '$' + t.toLocaleString('es-AR'));
+}
 function load() {
   try {
     const r = localStorage.getItem(STORE_KEY);
@@ -884,6 +907,8 @@ function load() {
     if (ex) excludedIds = new Set(JSON.parse(ex));
     const ma = localStorage.getItem(MANUAL_KEY);
     if (ma) manualIds = new Set(JSON.parse(ma));
+    const ph = localStorage.getItem(PURCHASE_KEY);
+    if (ph) purchaseHistory = JSON.parse(ph);
   } catch(e) {
     products = JSON.parse(JSON.stringify(DEFAULTS));
   }
@@ -1421,9 +1446,13 @@ function verResumen() {
 function confirmarCompra() {
   const needed = getShopList();
   const hoy = new Date().toISOString();
+  let grand = 0, itemCount = 0;
   needed.forEach(p => {
     const entry = shopData[p.id];
     const qty = getQty(p);
+    const price = getPrice(p);
+    const sub = qty > 0 && price > 0 ? qty * price : 0;
+    if (sub > 0) { grand += sub; itemCount++; }
     if (qty > 0) {
       p.stock = p.stock + qty;
       p.lastBought = hoy;
@@ -1433,12 +1462,16 @@ function confirmarCompra() {
       p.price = entry.price;
     }
   });
+  if (grand > 0) {
+    purchaseHistory.push({ date: hoy, total: grand, itemCount });
+    if (purchaseHistory.length > 200) purchaseHistory = purchaseHistory.slice(-200);
+  }
   // Limpiar lista
   doneIds.clear();
   shopData = {};
   manualIds.clear();
   excludedIds.clear();
-  save(); saveDone(); saveShopData(); saveManual(); saveExcluded();
+  save(); saveDone(); saveShopData(); saveManual(); saveExcluded(); savePurchaseHistory();
   closeModal('resumen-modal');
   renderAll();
   switchTab('stock');
@@ -1455,6 +1488,72 @@ function limpiarLista() {
 }
 
 // ─── PRESUPUESTO ────────────────────────────────────────
+const MONTH_NAMES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+function monthKey(iso) {
+  const d = new Date(iso);
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
+}
+function monthLabel(key) {
+  const [y,m] = key.split('-');
+  const name = MONTH_NAMES[parseInt(m,10)-1] || '';
+  return name.charAt(0).toUpperCase()+name.slice(1) + ' ' + y;
+}
+function groupPurchasesByMonth() {
+  const groups = {};
+  purchaseHistory.forEach(entry => {
+    const k = monthKey(entry.date);
+    if (!groups[k]) groups[k] = { total: 0, count: 0, entries: [] };
+    groups[k].total += entry.total;
+    groups[k].count += 1;
+    groups[k].entries.push(entry);
+  });
+  return groups;
+}
+function toggleMonth(k) { openMonths.has(k) ? openMonths.delete(k) : openMonths.add(k); renderBudget(); }
+
+function renderMonthlyExpenses() {
+  const groups = groupPurchasesByMonth();
+  const keys = Object.keys(groups).sort((a,b) => b.localeCompare(a)); // más reciente primero
+  if (!monthsInited && keys.length) { openMonths.add(keys[0]); monthsInited = true; }
+
+  const curKey = monthKey(new Date().toISOString());
+  const curTotal = groups[curKey] ? groups[curKey].total : 0;
+  const curCount = groups[curKey] ? groups[curKey].count : 0;
+
+  let html = `<div class="grand-card" style="margin-bottom:8px">
+    <div class="grand-lbl">Gastado este mes</div>
+    <div class="grand-num">${fmt(curTotal)}</div>
+    <div class="grand-sub">${curCount} compra${curCount===1?'':'s'} confirmada${curCount===1?'':'s'}</div>
+  </div>`;
+
+  if (!keys.length) {
+    html += `<div class="empty" style="padding:20px 16px"><div class="empty-icon">🧾</div>Todavía no confirmaste ninguna compra.<br><span style="font-size:12px;opacity:.7">El historial aparece acá cuando confirmás compras desde la Lista.</span></div>`;
+    return html;
+  }
+
+  html += `<div class="section-sep">🧾 Historial mensual</div>`;
+  keys.forEach(k => {
+    const g = groups[k];
+    const isOpen = openMonths.has(k);
+    const entriesSorted = [...g.entries].sort((a,b) => new Date(b.date)-new Date(a.date));
+    html += `<div class="cat-section">
+      <div class="cat-header" onclick="toggleMonth('${k}')">
+        <span class="cat-emoji">📅</span>
+        <span class="cat-label" style="text-transform:none;letter-spacing:0;font-weight:700">${monthLabel(k)} <span style="font-weight:400;opacity:.5">(${g.count})</span></span>
+        <span class="bcat-total" style="font-size:14px">${fmt(g.total)}</span>
+        <span class="cat-arrow ${isOpen?'open':''}">▾</span>
+      </div>
+      <div class="cat-body ${isOpen?'open':''}">
+        ${entriesSorted.map(e => `<div class="bitem" style="padding:8px 12px">
+          <span class="bitem-name">${fmtDateLong(e.date)} <span style="opacity:.5">· ${e.itemCount} producto${e.itemCount===1?'':'s'}</span></span>
+          <span class="bitem-price">${fmt(e.total)}</span>
+        </div>`).join('')}
+      </div>
+    </div>`;
+  });
+  return html;
+}
+
 function renderBudget() {
   const cont = document.getElementById('budget-list');
   const needed = products.filter(needsBuying);
@@ -1468,7 +1567,9 @@ function renderBudget() {
     cd[p.cat].items.push({ name: p.name, qty, unit: p.unit, price: p.price, sub });
   });
   const maxT = Math.max(...Object.values(cd).map(c => c.total), 1);
-  let html = `<div class="grand-card">
+  let html = renderMonthlyExpenses();
+  html += `<div class="section-sep">🔮 Estimado de próxima compra</div>`;
+  html += `<div class="grand-card">
     <div class="grand-lbl">Total estimado</div>
     <div class="grand-num">${fmt(grand)}</div>
     <div class="grand-sub">${needed.length} productos por reponer</div>
@@ -1625,6 +1726,7 @@ function syncToFirebase() {
         cats: CATS,
         manualIds: [...manualIds],
         excludedIds: [...excludedIds],
+        purchaseHistory: purchaseHistory,
         updatedAt: localWriteTs
       });
       document.getElementById('sdot').style.background = '#16a34a';
@@ -1659,6 +1761,7 @@ function initFirebase() {
     if (data.cats)     { CATS = data.cats; try { localStorage.setItem(CATS_KEY, JSON.stringify(CATS)); } catch(e){} renderCatSelects(); }
     if (data.manualIds)   { manualIds = new Set(data.manualIds); try { localStorage.setItem(MANUAL_KEY, JSON.stringify([...manualIds])); } catch(e){} }
     if (data.excludedIds) { excludedIds = new Set(data.excludedIds); try { localStorage.setItem(EXCLUDED_KEY, JSON.stringify([...excludedIds])); } catch(e){} }
+    if (data.purchaseHistory) { purchaseHistory = data.purchaseHistory; try { localStorage.setItem(PURCHASE_KEY, JSON.stringify(purchaseHistory)); } catch(e){} }
     document.getElementById('sdot').style.background = '#16a34a';
     document.getElementById('stext').textContent = 'Sincronizado';
     fbLoaded = true;
@@ -1693,7 +1796,8 @@ function exportarBackup() {
     shopData: shopData,
     cats: CATS,
     manualIds: [...manualIds],
-    excludedIds: [...excludedIds]
+    excludedIds: [...excludedIds],
+    purchaseHistory: purchaseHistory
   };
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
@@ -1719,7 +1823,8 @@ function importarBackup(input) {
       if (data.cats) CATS = data.cats;
       manualIds = new Set(data.manualIds || []);
       excludedIds = new Set(data.excludedIds || []);
-      save(); saveDone(); saveShopData(); saveCats(); saveManual(); saveExcluded();
+      purchaseHistory = data.purchaseHistory || [];
+      save(); saveDone(); saveShopData(); saveCats(); saveManual(); saveExcluded(); savePurchaseHistory();
       renderAll(); renderCatSelects();
       alert('✓ Backup restaurado correctamente');
     } catch(err) {
@@ -1738,7 +1843,7 @@ Object.assign(window, {
   openModal, closeModal, setUser, renderStock, renderShopList,
   exportarBackup, importarBackup, saveNewCat, openHistory, initPriceHistory,
   removeFromShopList, addToShopList, saveQtyShop, renderAddShopOptions,
-  renderManageCats, openEditCat, saveEditCat
+  renderManageCats, openEditCat, saveEditCat, toggleMonth, seedPastPurchase
 });
 </script>
 </body>
