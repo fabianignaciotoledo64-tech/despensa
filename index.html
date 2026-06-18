@@ -1380,6 +1380,7 @@ function renderShopList() {
   html += `
     <button class="btn-clear-sec" onclick="openModal('addshop-modal'); renderAddShopOptions()" style="margin-top:0;margin-bottom:8px">+ Agregar producto a la lista</button>
     <button class="btn-clear" onclick="verResumen()">Ver resumen y confirmar compra</button>
+    <div style="font-size:11px;color:var(--text3);font-family:'Helvetica Neue',sans-serif;text-align:center;margin-top:-4px;margin-bottom:12px">Solo se confirma lo tildado ✓ — lo demás queda en la lista</div>
     <button class="btn-clear-sec" onclick="limpiarLista()">Vaciar lista sin actualizar stock</button>
   `;
 
@@ -1402,11 +1403,13 @@ function toggleDone(id) {
 
 function verResumen() {
   const needed = getShopList();
+  const toConfirm = needed.filter(p => doneIds.has(p.id));
+  const pending = needed.filter(p => !doneIds.has(p.id));
   let grand = 0;
   const bycat = {};
   Object.keys(CATS).forEach(k => { bycat[k] = { items: [], total: 0 }; });
 
-  needed.forEach(p => {
+  toConfirm.forEach(p => {
     const qty = getQty(p);
     const price = getPrice(p);
     const sub = qty > 0 && price > 0 ? qty * price : 0;
@@ -1418,26 +1421,37 @@ function verResumen() {
   let html = `<div class="resumen-card">
     <div class="resumen-title">Total de la compra</div>
     <div class="resumen-total">${grand > 0 ? fmt(grand) : '—'}</div>
-    <div class="resumen-sub">${needed.length} productos</div>
+    <div class="resumen-sub">${toConfirm.length} producto${toConfirm.length===1?'':'s'} tildado${toConfirm.length===1?'':'s'}</div>
   </div>`;
 
-  Object.keys(CATS).forEach(k => {
-    if (!bycat[k].items.length) return;
-    const cat = CATS[k];
-    html += `<div class="budget-card">
-      <div class="bcat-row">
-        <span style="font-size:18px">${cat.emoji}</span>
-        <span class="bcat-name">${cat.label}</span>
-        <span class="bcat-total">${bycat[k].total > 0 ? fmt(bycat[k].total) : '—'}</span>
-      </div>
-      <div>${bycat[k].items.map(i =>
-        `<div class="bitem">
-          <span class="bitem-name">${i.name} <span style="opacity:.5">${i.qty} ${i.unit}</span></span>
-          <span class="bitem-price">${i.sub > 0 ? fmt(i.sub) : '—'}</span>
-        </div>`
-      ).join('')}</div>
-    </div>`;
-  });
+  if (!toConfirm.length) {
+    html += `<div class="empty" style="padding:24px 16px"><div class="empty-icon">☑️</div>No tildaste ningún producto todavía.<br><span style="font-size:12px;opacity:.7">Tildá lo que ya compraste en la lista antes de confirmar.</span></div>`;
+  } else {
+    Object.keys(CATS).forEach(k => {
+      if (!bycat[k].items.length) return;
+      const cat = CATS[k];
+      html += `<div class="budget-card">
+        <div class="bcat-row">
+          <span style="font-size:18px">${cat.emoji}</span>
+          <span class="bcat-name">${cat.label}</span>
+          <span class="bcat-total">${bycat[k].total > 0 ? fmt(bycat[k].total) : '—'}</span>
+        </div>
+        <div>${bycat[k].items.map(i =>
+          `<div class="bitem">
+            <span class="bitem-name">${i.name} <span style="opacity:.5">${i.qty} ${i.unit}</span></span>
+            <span class="bitem-price">${i.sub > 0 ? fmt(i.sub) : '—'}</span>
+          </div>`
+        ).join('')}</div>
+      </div>`;
+    });
+  }
+
+  if (pending.length) {
+    html += `<div class="section-sep">⏳ Sin tildar — quedan en la lista</div>
+      <div class="budget-card"><div>${pending.map(p =>
+        `<div class="bitem"><span class="bitem-name">${p.name}</span><span class="bitem-price" style="color:var(--text3)">—</span></div>`
+      ).join('')}</div></div>`;
+  }
 
   document.getElementById('resumen-content').innerHTML = html;
   openModal('resumen-modal');
@@ -1445,9 +1459,14 @@ function verResumen() {
 
 function confirmarCompra() {
   const needed = getShopList();
+  const toConfirm = needed.filter(p => doneIds.has(p.id));
+  if (!toConfirm.length) {
+    alert('No tildaste ningún producto. Tildá lo que ya compraste antes de confirmar.');
+    return;
+  }
   const hoy = new Date().toISOString();
   let grand = 0, itemCount = 0;
-  needed.forEach(p => {
+  toConfirm.forEach(p => {
     const entry = shopData[p.id];
     const qty = getQty(p);
     const price = getPrice(p);
@@ -1461,20 +1480,22 @@ function confirmarCompra() {
       if (entry.price !== p.price) addPriceHistory(p, entry.price, hoy);
       p.price = entry.price;
     }
+    // Este producto ya se compró: limpiar su override de cantidad/precio y su marca de "agregado manual"
+    delete shopData[p.id];
+    manualIds.delete(p.id);
   });
   if (grand > 0) {
     purchaseHistory.push({ date: hoy, total: grand, itemCount });
     if (purchaseHistory.length > 200) purchaseHistory = purchaseHistory.slice(-200);
   }
-  // Limpiar lista
+  // Solo se limpia lo tildado; lo que quedó sin tildar sigue en la lista para la próxima
   doneIds.clear();
-  shopData = {};
-  manualIds.clear();
   excludedIds.clear();
   save(); saveDone(); saveShopData(); saveManual(); saveExcluded(); savePurchaseHistory();
+  const quedanPendientes = getShopList().length > 0;
   closeModal('resumen-modal');
   renderAll();
-  switchTab('stock');
+  switchTab(quedanPendientes ? 'lista' : 'stock');
 }
 
 function limpiarLista() {
